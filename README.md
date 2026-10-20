@@ -36,6 +36,9 @@ twice. `WalletService.findMismatches()` and `releaseStaleHolds()` are the nightl
   `output_price_kobo`), because a text request is billed on both.
 - Adds a `bundles` table, a `jobs.started_at` column, foreign keys from the ledger to
   payments and jobs, and a trigger that blocks `UPDATE` and `DELETE` on the ledger.
+- Turns on row-level security for every table, with no policies, and removes Supabase's
+  `anon` and `authenticated` roles' access (`0003_lock_down_public_schema.sql`). Any new
+  table needs `ENABLE ROW LEVEL SECURITY` in its migration; a test fails otherwise.
 
 ### Launch prices
 
@@ -55,6 +58,13 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/zentrix pnpm db:migrate
 pnpm --filter @zentrix/api build
 pnpm --filter @zentrix/api start     # needs DATABASE_URL and PAYSTACK_SECRET_KEY in the environment
 ```
+
+### Using Supabase
+
+Supabase is only the PostgreSQL host; all reads and writes go through this API. Use the
+**Session pooler** connection string (Connect → Direct) with `?sslmode=require` as
+`DATABASE_URL`. Don't use supabase-js against these tables from the browser: the lockdown
+migration makes the Data API return nothing.
 
 Tests create and migrate a throwaway `zentrix_test` database (override with `TEST_DATABASE_URL`):
 
