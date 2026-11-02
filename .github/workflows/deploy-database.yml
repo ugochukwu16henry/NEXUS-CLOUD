@@ -67,3 +67,11 @@ jobs:
         run: supabase migration list --linked
       - name: Apply migrations
         run: supabase db push --linked --password "$SUPABASE_DB_PASSWORD"
+      - name: Summarise deployed migrations
+        run: |
+          {
+            echo "### Migrations on the hosted database"
+            echo '```'
+            supabase migration list --linked
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
