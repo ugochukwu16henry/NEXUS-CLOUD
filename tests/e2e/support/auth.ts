@@ -5,22 +5,42 @@ import { TOTP } from "otpauth";
 import { testEnv } from "./env";
 import { waitForMagicLink } from "./mailbox";
 
-/** Signs in through the real flow: request a link, read it from Mailpit, open it. */
-export async function signIn(page: Page, email = testEnv.ownerEmail): Promise<void> {
+/**
+ * Signs the owner in. Reuses the session saved by an earlier sign-in in this run when it is still
+ * valid, because Supabase limits sign-in emails per hour; pass `fresh: true` when the test needs a
+ * brand-new session (testing the sign-in flow itself, or a new session's MFA level).
+ */
+export async function signIn(page: Page, options: { fresh?: boolean } = {}): Promise<void> {
+  if (!options.fresh && existsSync(SESSION_FILE)) {
+    await page.context().addCookies(JSON.parse(readFileSync(SESSION_FILE, "utf8")));
+    await page.goto("/");
+    if (!new URL(page.url()).pathname.startsWith("/login")) {
+      await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
+      return;
+    }
+    // Signed out or revoked since it was saved.
+    await page.context().clearCookies();
+  }
+  await signInWithEmail(page, testEnv.ownerEmail);
+  mkdirSync(STATE_DIR, { recursive: true });
+  writeFileSync(SESSION_FILE, JSON.stringify(await page.context().cookies()));
+}
+
+/** The real flow: request a link, read it from Mailpit, open it. */
+export async function signInWithEmail(page: Page, email: string): Promise<void> {
   // Mailpit timestamps have second precision; allow for that and small clock differences.
   const since = new Date(Date.now() - 2_000);
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
 
-  // Supabase allows one sign-in email per address per second (and the app says so). Fast test runs
-  // can hit that between tests, so wait and ask again rather than fail.
+  // Supabase also allows only one sign-in email per address per second; wait and ask again.
   const sent = page.getByRole("status").filter({ hasText: "sign-in link is on its way" });
   const throttled = page.getByRole("alert").filter({ hasText: "Too many sign-in attempts" });
   for (let attempt = 1; ; attempt++) {
     await page.getByRole("button", { name: "Email me a sign-in link" }).click();
     await expect(sent.or(throttled)).toBeVisible();
     if (await sent.isVisible()) break;
-    if (attempt === 4) throw new Error("Sign-in stayed rate limited after 4 attempts");
+    if (attempt === 3) throw new Error("Sign-in stayed rate limited after 3 attempts");
     await page.waitForTimeout(2_000 * attempt);
   }
 
@@ -31,6 +51,7 @@ export async function signIn(page: Page, email = testEnv.ownerEmail): Promise<vo
 
 const STATE_DIR = join(__dirname, "..", ".state");
 const LAST_CODE_FILE = join(STATE_DIR, "last-totp-code");
+const SESSION_FILE = join(STATE_DIR, "owner-session.json");
 
 /**
  * A TOTP code for the secret. A verified code cannot be replayed, so when the current code was

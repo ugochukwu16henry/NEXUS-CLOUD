@@ -118,7 +118,7 @@ test.describe("project cockpit", () => {
     // gate is exercised.
     await page.getByRole("button", { name: "Sign out" }).click();
     await expect(page).toHaveURL(/\/login/);
-    await signIn(page);
+    await signIn(page, { fresh: true });
     await page.goto(`${projectUrl}/board`);
     await expectAccessible(page);
 

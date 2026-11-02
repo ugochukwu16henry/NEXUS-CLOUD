@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
+import { getViewer } from "@/lib/auth/session";
 import { isGitHubSignInEnabled } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Sign in · Nexus Cloud" };
@@ -18,6 +20,8 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ error?: string; notice?: string }>;
 }) {
+  // getViewer() asks the Auth server, so a revoked session still sees the sign-in form.
+  if (await getViewer()) redirect("/");
   const { error, notice } = await searchParams;
   const message = NOTICES[error ?? notice ?? ""];
 

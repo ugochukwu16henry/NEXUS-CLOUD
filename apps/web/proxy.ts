@@ -78,9 +78,10 @@ export async function proxy(request: NextRequest) {
     const next =
       pathname === "/" ? "" : `?next=${encodeURIComponent(pathname + request.nextUrl.search)}`;
     response = redirectTo(`/login${next}`);
-  } else if (user && pathname === "/login") {
-    response = redirectTo("/");
   }
+  // Signed-in users are sent away from /login by the login page itself, which checks with the Auth
+  // server. Doing it here from the locally verified JWT would loop for a session that was revoked
+  // elsewhere: the page would send it back to /login and the proxy back to /.
 
   response.headers.set("content-security-policy", csp);
   response.headers.set(CORRELATION_HEADER, correlationId);

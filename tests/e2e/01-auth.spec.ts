@@ -64,7 +64,7 @@ test.describe("sign-in and access control", () => {
     page,
     context,
   }) => {
-    await signIn(page);
+    await signIn(page, { fresh: true });
     await expect(page.getByText("owner", { exact: false }).first()).toBeVisible();
 
     const sessionCookies = (await context.cookies()).filter((cookie) =>
@@ -101,6 +101,25 @@ test.describe("sign-in and access control", () => {
     );
     await page.goto("/settings");
     await expect(page).toHaveURL(/\/login/);
+  });
+
+  test("a session revoked elsewhere is sent to sign-in, not into a redirect loop", async ({
+    page,
+    context,
+  }) => {
+    await signIn(page, { fresh: true });
+    const stale = await context.cookies();
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await expect(page).toHaveURL(/\/login\?notice=signed_out/);
+
+    // The old cookies still hold a correctly signed, unexpired JWT for the revoked session.
+    await context.addCookies(stale);
+    for (const path of ["/", "/settings", "/login"]) {
+      const response = await page.goto(path);
+      expect(response?.ok(), path).toBe(true);
+      await expect(page, path).toHaveURL(/\/login/);
+      await expect(page.getByRole("button", { name: "Email me a sign-in link" })).toBeVisible();
+    }
   });
 
   test("rejects a used or forged sign-in link", async ({ page }) => {

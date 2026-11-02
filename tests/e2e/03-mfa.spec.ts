@@ -2,7 +2,8 @@ import { expect, test } from "@playwright/test";
 import { saveTotpSecret, signIn, totpCode } from "./support/auth";
 
 // One journey: the owner's MFA state carries from step to step, so these run in order.
-test.describe.configure({ mode: "serial" });
+// Retries are off: a serial retry replays the whole group after MFA is already enrolled.
+test.describe.configure({ mode: "serial", retries: 0 });
 
 let secret = "";
 
@@ -45,7 +46,7 @@ test.describe("two-factor authentication for risk actions", () => {
 
   test("a new session must pass the challenge before signing out everywhere", async ({ page }) => {
     test.skip(!secret, "needs the enrolment step");
-    await signIn(page);
+    await signIn(page, { fresh: true });
     await expect(page.getByText("MFA on")).toBeVisible();
 
     await page.goto("/settings");
@@ -62,7 +63,8 @@ test.describe("two-factor authentication for risk actions", () => {
     await expect(page.getByText("MFA verified")).toBeVisible();
 
     await page.getByRole("button", { name: "Sign out everywhere" }).click();
-    await expect(page).toHaveURL(/\/login\?notice=signed_out_all/);
+    // Revoking every session can take a few seconds on a busy CI runner.
+    await expect(page).toHaveURL(/\/login\?notice=signed_out_all/, { timeout: 15_000 });
   });
 
   test("the audit log recorded the journey", async ({ page }) => {
