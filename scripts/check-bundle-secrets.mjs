@@ -18,6 +18,7 @@ const KEY_PATTERNS = [
   /sk-(proj-)?[A-Za-z0-9]{32,}/, // OpenAI / DeepSeek style
   /xai-[A-Za-z0-9]{32,}/, // xAI
   /AIza[0-9A-Za-z_-]{35}/, // Google
+  /sb_secret_[A-Za-z0-9_-]{20,}/, // Supabase secret key
   /"role"\s*:\s*"service_role"/, // decoded Supabase service-role JWT payload
 ];
 

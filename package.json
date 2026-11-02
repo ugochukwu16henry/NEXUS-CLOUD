@@ -15,7 +15,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:bundle-secrets": "node scripts/check-bundle-secrets.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:db": "supabase test db",
+    "db:types": "pnpm --filter @nexus/db gen:types",
+    "env:local": "node scripts/write-local-env.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs}": [
@@ -31,16 +34,18 @@
     "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^16.4.3",
     "@playwright/test": "^1.64.1",
-    "@types/node": "^26.6.6",
+    "@supabase/supabase-js": "^2.118.0",
+    "@types/node": "^26.0.0",
     "@vitest/coverage-v8": "^5.0.5",
-    "eslint": "^10.14.0",
+    "eslint": "^10.0.0",
     "globals": "^17.13.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
+    "otpauth": "^9.5.2",
     "prettier": "^3.9.10",
     "turbo": "^2.11.10",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.1",
+    "typescript-eslint": "^8.0.0",
     "vitest": "^5.0.5"
   }
 }

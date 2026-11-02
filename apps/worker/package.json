@@ -12,10 +12,12 @@
   },
   "dependencies": {
     "@nexus/config": "workspace:*",
-    "@nexus/core": "workspace:*"
+    "@nexus/core": "workspace:*",
+    "@nexus/observability": "workspace:*",
+    "@sentry/node": "^11.9.0"
   },
   "devDependencies": {
-    "@types/node": "^26.6.6",
+    "@types/node": "^26.0.0",
     "esbuild": "^0.28.2",
     "tsx": "^4.23.15"
   }

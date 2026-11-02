@@ -45,7 +45,7 @@ jobs:
           echo "${OSV_SHA256}  osv-scanner" | sha256sum --check
           chmod +x osv-scanner
       - name: Scan lockfile
-        run: ./osv-scanner scan source --lockfile pnpm-lock.yaml
+        run: ./osv-scanner scan source --config osv-scanner.toml --lockfile pnpm-lock.yaml
 
   sast:
     name: SAST (Semgrep)

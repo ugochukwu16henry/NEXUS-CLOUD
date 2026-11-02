@@ -4,3 +4,4 @@ supabase/.temp
 .next
 dist
 coverage
+packages/db/src/database.types.ts

@@ -3,13 +3,18 @@ import { z } from "zod";
 /** Variables safe to expose to the browser. Only NEXT_PUBLIC_* names belong here. */
 export const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  /** Supabase publishable key (sb_publishable_…); RLS limits what it can do. */
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
 });
 
 /** Server and worker variables (ADR 0004, 0007, 0008). Must never be imported into client code. */
 export const serverEnvSchema = publicEnvSchema.extend({
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  /** Supabase secret key (sb_secret_…); bypasses RLS, so server and worker only. */
+  SUPABASE_SECRET_KEY: z.string().min(1),
+  /** The single owner (ADR 0012). Only this email can create an account without an invite. */
+  NEXUS_OWNER_EMAIL: z.email().transform((email) => email.toLowerCase()),
   NEXUS_GLOBAL_MONTHLY_BUDGET_USD: z.coerce.number().positive().default(20),
+  SENTRY_DSN: z.url().optional(),
   XAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
@@ -34,12 +39,24 @@ function dropEmptyValues(source: Record<string, string | undefined>) {
   return Object.fromEntries(Object.entries(source).filter(([, value]) => value?.trim()));
 }
 
-export function parseServerEnv(source: Record<string, string | undefined>): ServerEnv {
-  const result = serverEnvSchema.safeParse(dropEmptyValues(source));
+function parse<T extends z.ZodType>(
+  schema: T,
+  source: Record<string, string | undefined>,
+  label: string,
+) {
+  const result = schema.safeParse(dropEmptyValues(source));
   if (!result.success) {
     // Report variable names only, never values.
     const names = result.error.issues.map((issue) => issue.path.join(".")).join(", ");
-    throw new Error(`Invalid server environment: ${names}`);
+    throw new Error(`Invalid ${label} environment: ${names}`);
   }
-  return result.data;
+  return result.data as z.infer<T>;
+}
+
+export function parseServerEnv(source: Record<string, string | undefined>): ServerEnv {
+  return parse(serverEnvSchema, source, "server");
+}
+
+export function parsePublicEnv(source: Record<string, string | undefined>): PublicEnv {
+  return parse(publicEnvSchema, source, "public");
 }

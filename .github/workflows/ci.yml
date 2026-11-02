@@ -13,6 +13,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  SUPABASE_CLI_VERSION: 2.101.0
+
 jobs:
   # Gates G1 (static) and G2 (tests) from the test strategy.
   verify:
@@ -34,21 +37,34 @@ jobs:
       - run: pnpm build
       - name: No server-only secrets in browser bundle
         run: pnpm check:bundle-secrets
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: web-build
-          path: |
-            apps/web/.next
-            !apps/web/.next/cache
-          include-hidden-files: true
-          retention-days: 3
 
-  # Gate G4 (system): E2E journeys and accessibility.
-  e2e:
-    name: E2E and accessibility
-    needs: verify
+  # Gate G2: migrations apply cleanly, RLS policies hold (pgTAP), generated types are current.
+  database:
+    name: Migrations and RLS tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - run: supabase db start
+      - name: pgTAP policy tests
+        run: supabase test db
+      - name: Generated database types match the migrations
+        run: |
+          supabase gen types typescript --local --schema public > /tmp/database.types.ts
+          diff -u packages/db/src/database.types.ts /tmp/database.types.ts || {
+            echo "::error file=packages/db/src/database.types.ts::Types are stale. Run: pnpm --filter @nexus/db gen:types"
+            exit 1
+          }
+
+  # Gate G4 (system): E2E journeys, accessibility and security headers against a real local stack.
+  e2e:
+    name: E2E and accessibility
+    needs: [verify, database]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
@@ -56,11 +72,18 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
         with:
-          name: web-build
-          path: apps/web/.next
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Start Supabase (database, auth, API, mail)
+        run: supabase start -x storage-api,imgproxy,realtime,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
+      - run: pnpm install --frozen-lockfile
+      - name: Write local env for the web app
+        run: node scripts/write-local-env.mjs owner@nexus.test
+      # NEXT_PUBLIC_* values are inlined at build time, so build after the env exists.
+      - run: pnpm --filter @nexus/web build
+      - name: No server-only secret values in browser-facing output
+        run: node --env-file=apps/web/.env.local scripts/check-bundle-secrets.mjs
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
         env:

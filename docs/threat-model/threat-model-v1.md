@@ -71,6 +71,7 @@
 
 ## 5. Review log
 
-| Date       | Change                 |
-| ---------- | ---------------------- |
-| 2026-11-02 | v1 created in Sprint 0 |
+| Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-02 | v1 created in Sprint 0                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 2026-11-02 | Sprint 1: T01, T02 (workspace level), T03, T04, T05, T21 implemented and tested. Sign-up is closed at the database (allowlist trigger) and sessions are HttpOnly (ADR 0013). Finding: in the local Postgres image, a denied function call after `SET ROLE anon` in a superuser session crashes the backend. Through PostgREST (the real attack surface) the same call returns 401 and the server stays up. It is not exploitable by API users; worth re-checking on hosted Supabase in Sprint 12. |

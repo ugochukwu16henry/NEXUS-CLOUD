@@ -5,10 +5,14 @@ allowBuilds:
   esbuild: true
 overrides:
   # GHSA-g3hv-75wg-m249 (moderate, dev-only via eslint). Remove once eslint depends on >=11.0.1.
-  minimatch: ">=11.0.1"
+  minimatch: "11.0.3"
 # Supply-chain hardening (Semgrep pnpm rules, threat model T15).
 # Wait 7 days before installing a newly published version; most malicious releases are pulled sooner.
 minimumReleaseAge: 10080
+# Exception: the GHSA-g3hv-75wg-m249 fix only exists in releases newer than 7 days. Remove after 2026-11-05.
+minimumReleaseAgeExclude:
+  - minimatch
+  - "@isaacs/nonrecursive-glob-match"
 # Refuse an update whose publishing trust level is lower than earlier versions (e.g. provenance dropped).
 trustPolicy: no-downgrade
 # Transitive dependencies may only come from the registry, not git URLs or tarballs.

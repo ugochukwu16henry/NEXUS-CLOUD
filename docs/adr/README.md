@@ -14,5 +14,6 @@
 | [0010](0010-mandatory-security-checks.md) | Mandatory security checks for every project           |
 | [0011](0011-client-visibility.md)         | Client visibility defaults and invite expiry          |
 | [0012](0012-personal-first.md)            | Personal workflow before SaaS                         |
+| [0013](0013-server-only-sessions.md)      | Server-only sessions in HttpOnly cookies              |
 
 New ADRs copy the format of an existing one and take the next number. Superseded ADRs keep their file and change status.

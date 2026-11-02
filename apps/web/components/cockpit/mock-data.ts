@@ -2,20 +2,6 @@ import type { WorkflowState } from "@nexus/core";
 
 // Static sample data for the Sprint 0 prototype. Replaced by Supabase queries from Sprint 2.
 
-export const NAV_ITEMS = [
-  "Projects",
-  "Repositories",
-  "Tasks",
-  "Agents",
-  "Integrations",
-  "Tests",
-  "Security",
-  "Deployments",
-  "Client rooms",
-  "Marketing",
-  "Settings",
-] as const;
-
 export const PROJECT = {
   name: "nexus-pilot-app",
   branch: "task/NX-12-password-reset",
