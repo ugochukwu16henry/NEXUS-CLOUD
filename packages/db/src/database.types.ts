@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           id: number
           metadata: Json
+          project_id: string | null
           result: string
           target_id: string | null
           target_type: string | null
@@ -33,6 +34,7 @@ export type Database = {
           created_at?: string
           id?: never
           metadata?: Json
+          project_id?: string | null
           result: string
           target_id?: string | null
           target_type?: string | null
@@ -47,12 +49,20 @@ export type Database = {
           created_at?: string
           id?: never
           metadata?: Json
+          project_id?: string | null
           result?: string
           target_id?: string | null
           target_type?: string | null
           workspace_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "audit_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "audit_events_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -91,6 +101,53 @@ export type Database = {
           },
         ]
       }
+      milestones: {
+        Row: {
+          client_visible: boolean
+          created_at: string
+          criteria: string
+          id: string
+          project_id: string
+          status: Database["public"]["Enums"]["milestone_status"]
+          target_date: string | null
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          client_visible?: boolean
+          created_at?: string
+          criteria?: string
+          id?: string
+          project_id: string
+          status?: Database["public"]["Enums"]["milestone_status"]
+          target_date?: string | null
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          client_visible?: boolean
+          created_at?: string
+          criteria?: string
+          id?: string
+          project_id?: string
+          status?: Database["public"]["Enums"]["milestone_status"]
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -115,6 +172,162 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          archived_at: string | null
+          budget_usd: number
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          environments: string[]
+          id: string
+          name: string
+          next_requirement_number: number
+          next_task_number: number
+          stack: string | null
+          status: Database["public"]["Enums"]["project_status"]
+          updated_at: string
+          version: number
+          workspace_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          budget_usd?: number
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          environments?: string[]
+          id?: string
+          name: string
+          next_requirement_number?: number
+          next_task_number?: number
+          stack?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
+          version?: number
+          workspace_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          budget_usd?: number
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          environments?: string[]
+          id?: string
+          name?: string
+          next_requirement_number?: number
+          next_task_number?: number
+          stack?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
+          version?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requirement_versions: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          requirement_id: string
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          requirement_id: string
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          requirement_id?: string
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requirement_versions_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "requirements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requirements: {
+        Row: {
+          acceptance_criteria: string
+          approval: Database["public"]["Enums"]["approval_state"]
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          priority: Database["public"]["Enums"]["requirement_priority"]
+          project_id: string
+          ref: number
+          source: string | null
+          statement: string
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          acceptance_criteria?: string
+          approval?: Database["public"]["Enums"]["approval_state"]
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["requirement_priority"]
+          project_id: string
+          ref?: number
+          source?: string | null
+          statement: string
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          acceptance_criteria?: string
+          approval?: Database["public"]["Enums"]["approval_state"]
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["requirement_priority"]
+          project_id?: string
+          ref?: number
+          source?: string | null
+          statement?: string
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requirements_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signup_allowlist: {
         Row: {
           created_at: string
@@ -132,6 +345,127 @@ export type Database = {
           reason?: string
         }
         Relationships: []
+      }
+      task_dependencies: {
+        Row: {
+          created_at: string
+          depends_on_id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string
+          depends_on_id: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string
+          depends_on_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_dependencies_depends_on_id_fkey"
+            columns: ["depends_on_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_dependencies_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          acceptance_criteria: string
+          assignee: string | null
+          assignee_type: string
+          blocked_reason: string | null
+          budget_usd: number
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string | null
+          evidence_links: string[]
+          id: string
+          milestone_id: string | null
+          project_id: string
+          ref: number
+          requirement_id: string | null
+          state: Database["public"]["Enums"]["workflow_state"]
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          acceptance_criteria?: string
+          assignee?: string | null
+          assignee_type?: string
+          blocked_reason?: string | null
+          budget_usd?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          evidence_links?: string[]
+          id?: string
+          milestone_id?: string | null
+          project_id: string
+          ref?: number
+          requirement_id?: string | null
+          state?: Database["public"]["Enums"]["workflow_state"]
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          acceptance_criteria?: string
+          assignee?: string | null
+          assignee_type?: string
+          blocked_reason?: string | null
+          budget_usd?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          evidence_links?: string[]
+          id?: string
+          milestone_id?: string | null
+          project_id?: string
+          ref?: number
+          requirement_id?: string | null
+          state?: Database["public"]["Enums"]["workflow_state"]
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "requirements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workspaces: {
         Row: {
@@ -170,7 +504,26 @@ export type Database = {
       }
     }
     Enums: {
+      approval_state: "draft" | "approved" | "rejected"
       membership_role: "owner" | "client" | "viewer"
+      milestone_status: "planned" | "in_progress" | "done"
+      project_status: "active" | "on_hold" | "completed"
+      requirement_priority: "must" | "should" | "could" | "wont"
+      workflow_state:
+        | "backlog"
+        | "ready"
+        | "in_progress"
+        | "agent_complete"
+        | "automated_checks"
+        | "needs_human_review"
+        | "approved"
+        | "preview_ready"
+        | "client_review"
+        | "release_approved"
+        | "deployed"
+        | "verified"
+        | "closed"
+        | "blocked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -298,7 +651,27 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      approval_state: ["draft", "approved", "rejected"],
       membership_role: ["owner", "client", "viewer"],
+      milestone_status: ["planned", "in_progress", "done"],
+      project_status: ["active", "on_hold", "completed"],
+      requirement_priority: ["must", "should", "could", "wont"],
+      workflow_state: [
+        "backlog",
+        "ready",
+        "in_progress",
+        "agent_complete",
+        "automated_checks",
+        "needs_human_review",
+        "approved",
+        "preview_ready",
+        "client_review",
+        "release_approved",
+        "deployed",
+        "verified",
+        "closed",
+        "blocked",
+      ],
     },
   },
 } as const

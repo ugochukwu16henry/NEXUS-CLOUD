@@ -1,3 +1,5 @@
+import { rmSync } from "node:fs";
+import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { STRANGER_EMAIL, testEnv } from "./support/env";
 import { clearMailbox } from "./support/mailbox";
@@ -24,4 +26,6 @@ export default async function globalSetup() {
     }
   }
   await clearMailbox();
+  // The owner is recreated without MFA, so a secret saved by an earlier run is stale.
+  rmSync(join(__dirname, ".state"), { recursive: true, force: true });
 }

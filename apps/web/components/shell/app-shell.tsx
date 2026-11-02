@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useMemo, useRef, type ReactNode } from "react";
 import { Group, Panel, Separator, usePanelRef } from "react-resizable-panels";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { Announcer } from "@/components/ui/announcer";
 import { useShortcuts, type Shortcut } from "./use-shortcuts";
 
 export type ShellViewer = {
@@ -20,8 +21,7 @@ type NavItem = { href: string; label: string } | { label: string; sprint: number
 function navItems(canReadAudit: boolean): NavItem[] {
   return [
     { href: "/", label: "Cockpit" },
-    { label: "Projects", sprint: 2 },
-    { label: "Tasks", sprint: 2 },
+    { href: "/projects", label: "Projects" },
     { label: "Repositories", sprint: 3 },
     { label: "Agents", sprint: 6 },
     { label: "Tests", sprint: 7 },
@@ -38,6 +38,10 @@ const MFA_BADGE = {
   enrolled: { text: "MFA on", className: "border-nx-teal/60 text-nx-teal" },
   off: { text: "MFA off", className: "border-nx-warn/60 text-nx-warn" },
 } as const;
+
+function isActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export function AppShell({ viewer, children }: { viewer: ShellViewer; children: ReactNode }) {
   const pathname = usePathname();
@@ -108,9 +112,9 @@ export function AppShell({ viewer, children }: { viewer: ShellViewer; children: 
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      aria-current={pathname === item.href ? "page" : undefined}
+                      aria-current={isActive(pathname, item.href) ? "page" : undefined}
                       className={`block px-4 py-1.5 text-sm ${
-                        pathname === item.href
+                        isActive(pathname, item.href)
                           ? "bg-nx-raised text-nx-text"
                           : "text-nx-muted hover:text-nx-text"
                       }`}
@@ -140,6 +144,8 @@ export function AppShell({ viewer, children }: { viewer: ShellViewer; children: 
           <div className="h-full min-h-0 overflow-auto">{children}</div>
         </Panel>
       </Group>
+
+      <Announcer />
 
       <dialog
         ref={shortcutsDialog}

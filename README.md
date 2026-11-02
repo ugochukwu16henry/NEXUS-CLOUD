@@ -4,13 +4,13 @@ A personal AI-powered software engineering cloud: one dark cockpit that coordina
 
 > Working name only. Domain and trademark checks are pending.
 
-**Status:** Sprint 1 (identity, app shell and audit) complete. See the [plan](docs/plan/Nexus_Cloud_Structure_Sprint_and_Test_Plan.pdf).
+**Status:** Sprint 2 (project cockpit: projects, requirements, tasks, milestones, workflow board) complete. See the [plan](docs/plan/Nexus_Cloud_Structure_Sprint_and_Test_Plan.pdf).
 
 ## Repository layout
 
 | Path                     | What it is                                                                        |
 | ------------------------ | --------------------------------------------------------------------------------- |
-| `apps/web`               | Next.js cockpit: sign-in, app shell, settings, MFA, audit log                     |
+| `apps/web`               | Next.js cockpit: sign-in, MFA, projects, board, requirements, milestones, audit   |
 | `apps/worker`            | Queue consumer for agent runs, builds, tests and scans (heartbeat until Sprint 6) |
 | `packages/core`          | Domain types and the workflow state machine                                       |
 | `packages/auth`          | Roles, permissions and the MFA rule for risk actions                              |

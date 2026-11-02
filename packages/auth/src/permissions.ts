@@ -10,6 +10,7 @@ export const PERMISSIONS = [
   "project:read",
   "project:write",
   "task:approve",
+  "requirement:approve",
   "audit:read",
   "member:manage",
   "settings:update",

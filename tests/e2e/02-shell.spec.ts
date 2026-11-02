@@ -76,7 +76,7 @@ test.describe("app shell", () => {
     await page.goto("/settings");
     await page.getByLabel("Display name").fill("Henry");
     await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByRole("status")).toHaveText("Profile saved.");
+    await expect(page.getByRole("status").filter({ hasText: "Profile saved." })).toBeVisible();
     await expect(page.getByRole("banner")).toContainText("Henry");
   });
 });

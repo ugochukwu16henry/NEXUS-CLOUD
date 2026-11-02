@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn, totpCode } from "./support/auth";
+import { saveTotpSecret, signIn, totpCode } from "./support/auth";
 
 // One journey: the owner's MFA state carries from step to step, so these run in order.
 test.describe.configure({ mode: "serial" });
@@ -28,6 +28,7 @@ test.describe("two-factor authentication for risk actions", () => {
 
     secret = (await page.getByTestId("totp-secret").textContent())!.trim();
     expect(secret).toMatch(/^[A-Z2-7]+=*$/);
+    saveTotpSecret(secret);
 
     await page.getByLabel("Authentication code").fill("000000");
     await page.getByRole("button", { name: "Turn on two-factor authentication" }).click();
@@ -36,7 +37,9 @@ test.describe("two-factor authentication for risk actions", () => {
     await page.getByLabel("Authentication code").fill(await totpCode(secret));
     await page.getByRole("button", { name: "Turn on two-factor authentication" }).click();
     // The page re-renders into its enrolled state.
-    await expect(page.getByRole("status")).toContainText("set up and verified for this session");
+    await expect(
+      page.getByRole("status").filter({ hasText: "set up and verified for this session" }),
+    ).toBeVisible();
     await expect(page.getByText("MFA verified")).toBeVisible();
   });
 

@@ -7,6 +7,8 @@ export type AuditResult = "success" | "denied" | "error";
 
 export type AuditEventInput = {
   workspaceId: string | null;
+  /** Set for project-scoped actions so they appear in the project's activity timeline. */
+  projectId?: string | null;
   actorId: string | null;
   actorType: ActorType;
   /** Dotted lower-case name such as `auth.sign_in` or `session.revoke_all`. */
@@ -21,6 +23,7 @@ export type AuditEventInput = {
 
 export type AuditEventRow = {
   workspace_id: string | null;
+  project_id: string | null;
   actor_id: string | null;
   actor_type: ActorType;
   action: string;
@@ -48,6 +51,7 @@ export function toAuditRow(input: AuditEventInput): AuditEventRow {
   }
   return {
     workspace_id: input.workspaceId,
+    project_id: input.projectId ?? null,
     actor_id: input.actorId,
     actor_type: input.actorType,
     action: input.action,

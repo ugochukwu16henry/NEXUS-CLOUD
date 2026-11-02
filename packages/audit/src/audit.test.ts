@@ -14,6 +14,7 @@ describe("toAuditRow", () => {
   it("maps to snake_case columns with null defaults", () => {
     expect(toAuditRow(base)).toEqual({
       workspace_id: base.workspaceId,
+      project_id: null,
       actor_id: base.actorId,
       actor_type: "user",
       action: "auth.sign_in",
@@ -32,6 +33,12 @@ describe("toAuditRow", () => {
       expect(() => toAuditRow({ ...base, action })).toThrow(/Invalid audit action/);
     },
   );
+
+  it("carries the project for the activity timeline", () => {
+    expect(
+      toAuditRow({ ...base, projectId: "40000000-0000-0000-0000-000000000001" }).project_id,
+    ).toBe("40000000-0000-0000-0000-000000000001");
+  });
 
   it("requires a UUID correlation ID", () => {
     expect(() => toAuditRow({ ...base, correlationId: "abc" })).toThrow(/correlation/);

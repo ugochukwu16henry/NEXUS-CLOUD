@@ -22,3 +22,6 @@ supabase/.temp
 
 .DS_Store
 Thumbs.db
+
+# E2E runtime state (TOTP secret shared between spec files)
+tests/e2e/.state/

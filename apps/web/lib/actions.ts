@@ -15,20 +15,30 @@ export const AUDITED = Symbol.for("nexus.audited-action");
 /** `public`: no session needed. `authenticated`: any signed-in user. Otherwise a permission. */
 export type Access = "public" | "authenticated" | Permission;
 
+export type AuditDetails = {
+  result?: AuditResult;
+  /** Puts the event on the project's activity timeline. */
+  projectId?: string;
+  targetType?: string;
+  targetId?: string;
+  metadata?: Record<string, unknown>;
+};
+
+/** What a handler returns: the state shown to the user plus optional audit details. */
+export type HandlerResult = ActionState & { audit?: AuditDetails };
+
 export type ActionContext = {
   viewer: Viewer | null;
   correlationId: string;
   log: Logger;
-};
-
-/** What a handler returns: the state shown to the user plus optional audit details. */
-export type HandlerResult = ActionState & {
-  audit?: {
-    result?: AuditResult;
-    targetType?: string;
-    targetId?: string;
-    metadata?: Record<string, unknown>;
-  };
+  /** Adds audit details early, so they are kept even when the handler ends with redirect(). */
+  annotate: (details: AuditDetails) => void;
+  /**
+   * Checks a permission that depends on the input (e.g. approving a task). Returns null when
+   * allowed, a denial to return otherwise; redirects to the MFA challenge when a second factor is
+   * needed. The denial is audited either way.
+   */
+  require: (permission: Permission, mfaReturnTo?: string) => HandlerResult | null;
 };
 
 const INVALID = Symbol("invalid-input");
@@ -74,9 +84,11 @@ export function defineAction<Input>(
     const log = logger.child({ correlationId, action: config.name });
     const viewer = await getViewer();
 
-    const audit = (result: AuditResult, details: HandlerResult["audit"] = {}) =>
+    let annotated: AuditDetails = {};
+    const audit = (result: AuditResult, details: AuditDetails = {}) =>
       recordAudit({
         workspaceId: viewer?.workspaceId ?? null,
+        projectId: details.projectId ?? null,
         actorId: viewer?.userId ?? null,
         actorType: viewer ? "user" : "system",
         action: config.name,
@@ -109,18 +121,52 @@ export function defineAction<Input>(
       return { status: "error", message: input[INVALID] };
     }
 
+    const context: ActionContext = {
+      viewer,
+      correlationId,
+      log,
+      annotate: (details) => {
+        annotated = {
+          ...annotated,
+          ...details,
+          metadata: { ...annotated.metadata, ...details.metadata },
+        };
+      },
+      require: (permission, mfaReturnTo) => {
+        const decision = authorize(
+          { role: viewer?.role ?? null, aal: viewer?.aal ?? "aal1" },
+          permission,
+        );
+        if (decision.allowed) return null;
+        context.annotate({ result: "denied", metadata: { reason: decision.reason, permission } });
+        if (decision.reason === "mfa_required") {
+          redirect(`/mfa?next=${encodeURIComponent(safeRedirectPath(mfaReturnTo))}`);
+        }
+        return { status: "error", message: "You don't have permission to do that." };
+      },
+    };
+
     try {
-      const { audit: details, ...state } = await handler(input, { viewer, correlationId, log });
-      await audit(details?.result ?? (state.status === "error" ? "error" : "success"), details);
+      const { audit: details, ...state } = await handler(input, context);
+      const merged = {
+        ...annotated,
+        ...details,
+        metadata: { ...annotated.metadata, ...details?.metadata },
+      };
+      await audit(merged.result ?? (state.status === "error" ? "error" : "success"), merged);
       return state;
     } catch (error) {
       if (isNextControlFlow(error)) {
-        // redirect() inside a handler means it finished successfully.
-        await audit("success");
+        // redirect() inside a handler ends it; the outcome is whatever was annotated (default success).
+        await audit(annotated.result ?? "success", annotated);
         throw error;
       }
       await audit("error", {
-        metadata: { message: error instanceof Error ? error.message : "unknown" },
+        ...annotated,
+        metadata: {
+          ...annotated.metadata,
+          message: error instanceof Error ? error.message : "unknown",
+        },
       });
       reportError(error, { action: config.name, correlationId });
       return { status: "error", message: "Something went wrong. Please try again." };
