@@ -1,0 +1,84 @@
+name: Deploy Supabase migrations
+description: >
+  Links one hosted Supabase project and applies pending migrations. Used by deploy-database.yml,
+  whose jobs pass in their own GitHub environment's secrets.
+inputs:
+  target:
+    description: Environment name, for messages.
+    required: true
+  required:
+    description: When "false", missing credentials skip the deploy with a notice instead of failing.
+    default: "true"
+  access-token:
+    description: Supabase personal access token (sbp_…).
+    required: false
+  project-id:
+    description: 20-letter project ref.
+    required: false
+  db-password:
+    description: Database password.
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Check credentials
+      id: credentials
+      shell: bash
+      env:
+        TARGET: ${{ inputs.target }}
+        REQUIRED: ${{ inputs.required }}
+        SUPABASE_ACCESS_TOKEN: ${{ inputs.access-token }}
+        SUPABASE_PROJECT_ID: ${{ inputs.project-id }}
+        SUPABASE_DB_PASSWORD: ${{ inputs.db-password }}
+      run: |
+        missing=""
+        for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID; do
+          [ -n "${!name}" ] || missing="$missing $name"
+        done
+        if [ -n "$missing" ]; then
+          if [ "$REQUIRED" = "true" ]; then
+            echo "::error title=Missing secrets::Add these to the '$TARGET' environment:$missing"
+            exit 1
+          fi
+          echo "::notice title=$TARGET not configured::Skipping $TARGET. Add$missing to the '$TARGET' environment to deploy there (docs/runbooks/staging.md)."
+          echo "configured=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        # Shape checks catch common paste mistakes without revealing the values.
+        if ! [[ "$SUPABASE_PROJECT_ID" =~ ^[a-z]{20}$ ]]; then
+          echo "::error title=SUPABASE_PROJECT_ID looks wrong::Use only the 20-letter project ref (the part before .supabase.co), not the URL."
+          exit 1
+        fi
+        if [[ "$SUPABASE_ACCESS_TOKEN" != sbp_* ]]; then
+          echo "::error title=SUPABASE_ACCESS_TOKEN looks wrong::Use a personal access token (starts with sbp_) from Account preferences → Access Tokens, not a project API key."
+          exit 1
+        fi
+        echo "configured=true" >> "$GITHUB_OUTPUT"
+    - if: steps.credentials.outputs.configured == 'true'
+      uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+      with:
+        version: 2.101.0
+    - name: Link, preview and apply migrations
+      if: steps.credentials.outputs.configured == 'true'
+      shell: bash
+      env:
+        TARGET: ${{ inputs.target }}
+        SUPABASE_ACCESS_TOKEN: ${{ inputs.access-token }}
+        SUPABASE_PROJECT_ID: ${{ inputs.project-id }}
+        SUPABASE_DB_PASSWORD: ${{ inputs.db-password }}
+      run: |
+        if ! supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD" > link.log 2>&1; then
+          cat link.log
+          # GitHub masks secret values in this output, so the error can be shown as an annotation.
+          echo "::error title=supabase link failed::$(tail -n 4 link.log | tr '\n' ' ')"
+          exit 1
+        fi
+        supabase migration list --linked
+        supabase db push --linked --dry-run --password "$SUPABASE_DB_PASSWORD"
+        supabase db push --linked --password "$SUPABASE_DB_PASSWORD"
+        {
+          echo "### Migrations on $TARGET"
+          echo '```'
+          supabase migration list --linked
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"

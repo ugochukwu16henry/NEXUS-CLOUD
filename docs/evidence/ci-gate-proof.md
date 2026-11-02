@@ -19,7 +19,7 @@ The planted value was invented for the test and never belonged to any service. T
 
 The same runs surfaced two issues on `main`, fixed in the following commit:
 
-1. **Semgrep:** `secrets: inherit` in the new database deploy workflow passed every secret to the reusable job. Removed: each deploy job now reads only its own GitHub environment's secrets.
+1. **Semgrep:** `secrets: inherit` in the new database deploy workflow passed every secret to the reusable job. Simply removing it broke the production deploy, because the reusable workflow could no longer see the environment's secrets (run 41472085762; nothing was applied). The final fix: one ordinary job per environment, each declaring its GitHub environment and passing only its three Supabase values to a shared composite action (`.github/actions/supabase-deploy`).
 2. **E2E in CI:** sign-ins hit local Supabase's per-IP limit (30 per 5 minutes), because the suite now signs in about 40 times. Local and CI limits were raised in `supabase/config.toml`; hosted limits are unchanged.
 
 ## What happened next: the red branches were merged
