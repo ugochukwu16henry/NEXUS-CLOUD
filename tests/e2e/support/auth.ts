@@ -11,32 +11,46 @@ export async function signIn(page: Page, email = testEnv.ownerEmail): Promise<vo
   const since = new Date(Date.now() - 2_000);
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
-  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
-  await expect(page.getByRole("status")).toContainText("sign-in link is on its way");
+
+  // Supabase allows one sign-in email per address per second (and the app says so). Fast test runs
+  // can hit that between tests, so wait and ask again rather than fail.
+  const sent = page.getByRole("status").filter({ hasText: "sign-in link is on its way" });
+  const throttled = page.getByRole("alert").filter({ hasText: "Too many sign-in attempts" });
+  for (let attempt = 1; ; attempt++) {
+    await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+    await expect(sent.or(throttled)).toBeVisible();
+    if (await sent.isVisible()) break;
+    if (attempt === 4) throw new Error("Sign-in stayed rate limited after 4 attempts");
+    await page.waitForTimeout(2_000 * attempt);
+  }
+
   await page.goto(await waitForMagicLink(email, since));
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
 }
 
-let lastCode: string | undefined;
+const STATE_DIR = join(__dirname, "..", ".state");
+const LAST_CODE_FILE = join(STATE_DIR, "last-totp-code");
 
 /**
- * A TOTP code for the secret. Waits for the next 30-second window when the current code was
- * already used, since a verified code cannot be replayed.
+ * A TOTP code for the secret. A verified code cannot be replayed, so when the current code was
+ * already used, wait for the next 30-second window. The last code is kept on disk because a
+ * Playwright retry runs in a fresh process.
  */
 export async function totpCode(secret: string): Promise<string> {
   const totp = new TOTP({ secret, digits: 6, period: 30, algorithm: "SHA1" });
+  const lastCode = existsSync(LAST_CODE_FILE) ? readFileSync(LAST_CODE_FILE, "utf8").trim() : "";
   let code = totp.generate();
   if (code === lastCode) {
     const msUntilNext = 30_000 - (Date.now() % 30_000) + 500;
     await new Promise((resolve) => setTimeout(resolve, msUntilNext));
     code = totp.generate();
   }
-  lastCode = code;
+  mkdirSync(STATE_DIR, { recursive: true });
+  writeFileSync(LAST_CODE_FILE, code);
   return code;
 }
 
-const STATE_DIR = join(__dirname, "..", ".state");
 const SECRET_FILE = join(STATE_DIR, "totp-secret");
 
 /** Remembers the owner's TOTP secret so later spec files in the same run can pass MFA challenges. */
