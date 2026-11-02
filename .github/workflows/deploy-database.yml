@@ -79,7 +79,9 @@ jobs:
             exit 1
           fi
       - name: Show pending migrations
-        run: supabase migration list --linked
+        run: |
+          supabase migration list --linked
+          supabase db push --linked --dry-run --password "$SUPABASE_DB_PASSWORD"
       - name: Apply migrations
         run: supabase db push --linked --password "$SUPABASE_DB_PASSWORD"
       - name: Summarise deployed migrations
