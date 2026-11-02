@@ -61,8 +61,23 @@ jobs:
             echo "::error title=Missing secrets::Add these to the 'production' environment:$missing"
             exit 1
           fi
+          # Shape checks catch common paste mistakes without revealing the values.
+          if ! [[ "$SUPABASE_PROJECT_ID" =~ ^[a-z]{20}$ ]]; then
+            echo "::error title=SUPABASE_PROJECT_ID looks wrong::Use only the 20-letter project ref (the part before .supabase.co), not the URL."
+            exit 1
+          fi
+          if [[ "$SUPABASE_ACCESS_TOKEN" != sbp_* ]]; then
+            echo "::error title=SUPABASE_ACCESS_TOKEN looks wrong::Use a personal access token (starts with sbp_) from Account preferences → Access Tokens, not a project API key."
+            exit 1
+          fi
       - name: Link project
-        run: supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
+        run: |
+          if ! supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD" > link.log 2>&1; then
+            cat link.log
+            # GitHub masks secret values in this output, so the error can be shown as an annotation.
+            echo "::error title=supabase link failed::$(tail -n 4 link.log | tr '\n' ' ')"
+            exit 1
+          fi
       - name: Show pending migrations
         run: supabase migration list --linked
       - name: Apply migrations
