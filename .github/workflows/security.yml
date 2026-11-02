@@ -54,4 +54,7 @@ jobs:
       image: semgrep/semgrep:1.183.0
     steps:
       - uses: actions/checkout@v5
-      - run: semgrep scan --config p/default --config p/typescript --config p/secrets --error --metrics=off
+      - name: Scan
+        run: semgrep scan --config p/default --config p/typescript --config p/secrets --metrics=off --json --output semgrep.json
+      - name: Report findings as annotations
+        run: python3 scripts/semgrep-annotate.py semgrep.json
