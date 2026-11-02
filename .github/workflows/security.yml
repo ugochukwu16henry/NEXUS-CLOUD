@@ -1,0 +1,57 @@
+name: Security
+
+# Gate G3 and ADR 0010: secrets, dependency and SAST scans on every PR and push to main.
+# Scanner binaries are pinned by version and verified by SHA-256 from the official releases.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 5 * * 1" # weekly, catches newly published advisories
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        run: |
+          curl -sSLo gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum --check
+          tar -xzf gitleaks.tar.gz gitleaks
+      - name: Scan full git history
+        run: ./gitleaks git . --redact --verbose --exit-code 1
+
+  dependencies:
+    name: Dependency scan (OSV-Scanner)
+    runs-on: ubuntu-latest
+    env:
+      OSV_VERSION: 2.7.0
+      OSV_SHA256: 160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install OSV-Scanner
+        run: |
+          curl -sSLo osv-scanner "https://github.com/google/osv-scanner/releases/download/v${OSV_VERSION}/osv-scanner_linux_amd64"
+          echo "${OSV_SHA256}  osv-scanner" | sha256sum --check
+          chmod +x osv-scanner
+      - name: Scan lockfile
+        run: ./osv-scanner scan source --lockfile pnpm-lock.yaml
+
+  sast:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:1.183.0
+    steps:
+      - uses: actions/checkout@v5
+      - run: semgrep scan --config p/default --config p/typescript --config p/secrets --error --metrics=off

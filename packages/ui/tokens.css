@@ -1,0 +1,19 @@
+/*
+ * Nexus Cloud design tokens (blueprint section 3): near-black, charcoal and deep navy surfaces
+ * with teal / electric-blue accents. Contrast pairs used for text meet WCAG AA (>= 4.5:1).
+ */
+@theme {
+  --color-nx-bg: #070b14;
+  --color-nx-surface: #0d1422;
+  --color-nx-panel: #111a2b;
+  --color-nx-raised: #172238;
+  --color-nx-border: #22304a;
+  --color-nx-text: #e6edf7;
+  --color-nx-muted: #94a3b8;
+  --color-nx-teal: #2dd4bf;
+  --color-nx-blue: #38bdf8;
+  --color-nx-ok: #4ade80;
+  --color-nx-warn: #fbbf24;
+  --color-nx-danger: #f87171;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+}

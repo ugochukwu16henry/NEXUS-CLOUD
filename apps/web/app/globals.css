@@ -1,0 +1,18 @@
+@import "tailwindcss";
+@import "@nexus/ui/tokens.css";
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-nx-bg);
+  color: var(--color-nx-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-nx-blue);
+  outline-offset: 2px;
+}

@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+docs/plan/*.pdf
+supabase/.temp
+.next
+dist
+coverage

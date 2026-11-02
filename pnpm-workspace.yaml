@@ -1,0 +1,8 @@
+packages:
+  - apps/*
+  - packages/*
+allowBuilds:
+  esbuild: true
+overrides:
+  # GHSA-g3hv-75wg-m249 (moderate, dev-only via eslint). Remove once eslint depends on >=11.0.1.
+  minimatch: ">=11.0.1"
