@@ -21,3 +21,9 @@ The same runs surfaced two issues on `main`, fixed in the following commit:
 
 1. **Semgrep:** `secrets: inherit` in the new database deploy workflow passed every secret to the reusable job. Removed: each deploy job now reads only its own GitHub environment's secrets.
 2. **E2E in CI:** sign-ins hit local Supabase's per-IP limit (30 per 5 minutes), because the suite now signs in about 40 times. Local and CI limits were raised in `supabase/config.toml`; hosted limits are unchanged.
+
+## What happened next: the red branches were merged
+
+Both proof branches were opened as pull requests and merged (#6 and #7) while their checks were red. GitHub allowed it because `main` doesn't require the checks yet. The next commit removed the failing test and the fake key file. gitleaks scans the whole history, so `.gitleaks.toml` exempts just that fake file in commit `5873f34`.
+
+This is the strongest evidence for the open Sprint 0 item: **until [branch protection](../runbooks/branch-protection.md) is on, a red pull request can still be merged.**

@@ -11,3 +11,13 @@ real secret added there later is still caught.
 condition = "AND"
 commits = ["51260dc972b83840cf8307d63940016552d39fa3"]
 paths = ['''^packages/observability/src/observability\.test\.ts$''']
+
+[[allowlists]]
+description = """
+CI gate proof (docs/evidence/ci-gate-proof.md): a fake api_key planted on a throwaway branch, which
+was then merged by mistake (PR #7) and removed in the next commit. The value was invented and never
+belonged to any service. Scoped to that file in that commit only.
+"""
+condition = "AND"
+commits = ["5873f34e98c19ac36a00954c33014526c2b3fe83"]
+paths = ['''^docs/evidence/planted-secret\.txt$''']

@@ -51,10 +51,3 @@ describe("canTransition", () => {
     expect(canTransition("blocked", "approved")).toBe(false);
   });
 });
-
-// CI gate proof (docs/evidence/ci-gate-proof.md): this branch must go red. Never merge it.
-describe("deliberately failing test", () => {
-  it("fails on purpose", () => {
-    expect(1 + 1).toBe(3);
-  });
-});
