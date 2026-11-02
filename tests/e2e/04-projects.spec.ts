@@ -162,6 +162,31 @@ test.describe("project cockpit", () => {
     await expect(column(page, "Backlog").getByText("Waiting on NX-2")).toBeVisible();
   });
 
+  test("cards can be dragged to the next column, and invalid drops are refused", async ({
+    page,
+  }) => {
+    await page.goto(`${projectUrl}/board`);
+    const card = (ref: number) =>
+      page.locator('li[draggable="true"]').filter({ hasText: `NX-${ref}` });
+    const dropZone = (state: string) => page.locator(`li[data-column="${state}"]`);
+
+    // NX-3 is in Backlog: Deployed is not a valid next step.
+    await card(3).dragTo(dropZone("deployed"));
+    await expect(column(page, "Backlog").getByText("NX-3", { exact: true })).toBeVisible();
+
+    // Ready is the next step, so the drop moves it.
+    await card(3).dragTo(dropZone("ready"));
+    await expect(page.getByTestId("announcer")).toHaveText("NX-3 moved to Ready.");
+    await expect(column(page, "Ready").getByText("NX-3", { exact: true })).toBeVisible();
+
+    // Dropping on Blocked asks for a reason first.
+    await card(3).dragTo(dropZone("blocked"));
+    await page.getByLabel("Reason for blocking NX-3").fill("Needs test data");
+    await page.getByRole("button", { name: "Block task" }).click();
+    await expect(column(page, "Blocked / Needs Review").getByText("Needs test data")).toBeVisible();
+    await expectAccessible(page);
+  });
+
   test("overview, milestone progress and activity timeline reflect the work", async ({ page }) => {
     await page.goto(projectUrl);
     await expect(page.getByText("1/1 done")).toBeVisible();

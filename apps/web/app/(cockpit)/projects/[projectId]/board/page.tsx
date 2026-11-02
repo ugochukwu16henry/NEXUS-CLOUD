@@ -1,29 +1,64 @@
-import {
-  BLOCKED_STATE,
-  STATE_LABELS,
-  WORKFLOW_STATES,
-  isDone,
-  type WorkflowState,
-} from "@nexus/core";
+import { BLOCKED_STATE, WORKFLOW_STATES, isDone, type WorkflowState } from "@nexus/core";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MoveTaskForm } from "@/components/projects/move-task-form";
+import { BoardColumns, type BoardColumn } from "@/components/projects/board-columns";
 import { buttonPrimary } from "@/components/ui/fields";
 import { getProject, getProjectTasks } from "@/lib/projects/queries";
 
 export const metadata: Metadata = { title: "Board · Nexus Cloud" };
 
 const COLUMNS: WorkflowState[] = [BLOCKED_STATE, ...WORKFLOW_STATES];
+const ALL_STATES = new Set<string>(COLUMNS);
 
-export default async function BoardPage({ params }: { params: Promise<{ projectId: string }> }) {
+/** Cards rendered per column before "Show all" (keeps large boards fast; test plan: 500 tasks < 1.5 s). */
+const COLUMN_LIMIT = 50;
+
+export default async function BoardPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ show?: string }>;
+}) {
   const { projectId } = await params;
+  const shown = new Set(
+    ((await searchParams).show ?? "").split(",").filter((state) => ALL_STATES.has(state)),
+  );
   const [project, { tasks, edges }] = await Promise.all([
     getProject(projectId),
     getProjectTasks(projectId),
   ]);
-  const stateById = new Map(tasks.map((task) => [task.id, task.state]));
-  const refById = new Map(tasks.map((task) => [task.id, task.ref]));
-  const returnTo = `/projects/${project.id}/board`;
+  const byId = new Map(tasks.map((task) => [task.id, task]));
+  const base = `/projects/${project.id}/board`;
+
+  const columns: BoardColumn[] = COLUMNS.map((state) => {
+    const inColumn = tasks.filter((task) => task.state === state);
+    const expanded = shown.has(state);
+    const visible = expanded ? inColumn : inColumn.slice(0, COLUMN_LIMIT);
+    return {
+      state,
+      total: inColumn.length,
+      showAllHref:
+        !expanded && inColumn.length > COLUMN_LIMIT
+          ? `${base}?show=${[...shown, state].join(",")}`
+          : null,
+      cards: visible.map((task) => ({
+        id: task.id,
+        ref: task.ref,
+        title: task.title,
+        state: task.state,
+        version: task.version,
+        assignee: task.assignee,
+        assigneeType: task.assignee_type,
+        blockedReason: task.blocked_reason,
+        waitingOn: edges
+          .filter((edge) => edge.taskId === task.id)
+          .map((edge) => byId.get(edge.dependsOnId))
+          .filter((dep) => dep && !isDone(dep.state))
+          .map((dep) => dep!.ref),
+      })),
+    };
+  });
 
   return (
     <main id="main" className="space-y-4 p-6">
@@ -33,83 +68,10 @@ export default async function BoardPage({ params }: { params: Promise<{ projectI
           New task
         </Link>
       </div>
-
       {tasks.length === 0 ? (
         <p className="text-sm text-nx-muted">No tasks yet.</p>
       ) : (
-        <div
-          role="region"
-          aria-label="Workflow board, scrolls sideways"
-          tabIndex={0}
-          className="overflow-x-auto pb-2"
-        >
-          <ol className="flex gap-3" aria-label="Workflow columns">
-            {COLUMNS.map((column) => {
-              const columnTasks = tasks.filter((task) => task.state === column);
-              if (column === BLOCKED_STATE && columnTasks.length === 0) return null;
-              return (
-                <li key={column} className="w-64 shrink-0">
-                  <h2 className="mb-2 flex justify-between text-xs font-semibold uppercase tracking-wider text-nx-muted">
-                    <span>{STATE_LABELS[column]}</span>
-                    <span>{columnTasks.length}</span>
-                  </h2>
-                  <ul className="space-y-2" aria-label={`${STATE_LABELS[column]} tasks`}>
-                    {columnTasks.map((task) => {
-                      const waitingOn = edges
-                        .filter((edge) => edge.taskId === task.id)
-                        .filter((edge) => !isDone(stateById.get(edge.dependsOnId) ?? "backlog"));
-                      return (
-                        <li
-                          key={task.id}
-                          className={`space-y-2 rounded-md border bg-nx-raised p-3 ${
-                            task.state === BLOCKED_STATE
-                              ? "border-nx-danger/60"
-                              : "border-nx-border"
-                          }`}
-                        >
-                          <div>
-                            <span className="font-mono text-xs text-nx-muted">NX-{task.ref}</span>
-                            <Link
-                              href={`/projects/${project.id}/tasks/${task.id}`}
-                              className="block text-sm font-medium hover:underline"
-                            >
-                              {task.title}
-                            </Link>
-                          </div>
-                          {task.assignee && (
-                            <p className="text-xs text-nx-muted">
-                              {task.assignee_type === "agent" ? "Agent: " : ""}
-                              {task.assignee}
-                            </p>
-                          )}
-                          {task.blocked_reason && (
-                            <p className="text-xs text-nx-danger">{task.blocked_reason}</p>
-                          )}
-                          {waitingOn.length > 0 && (
-                            <p className="text-xs text-nx-warn">
-                              Waiting on{" "}
-                              {waitingOn
-                                .map((edge) => `NX-${refById.get(edge.dependsOnId)}`)
-                                .join(", ")}
-                            </p>
-                          )}
-                          <MoveTaskForm
-                            projectId={project.id}
-                            taskId={task.id}
-                            taskRef={task.ref}
-                            state={task.state}
-                            version={task.version}
-                            returnTo={returnTo}
-                          />
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
+        <BoardColumns projectId={project.id} columns={columns} returnTo={base} />
       )}
     </main>
   );

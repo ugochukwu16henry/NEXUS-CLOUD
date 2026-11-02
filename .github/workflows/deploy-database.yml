@@ -1,15 +1,16 @@
 name: Deploy database
 
-# Applies new migrations to the hosted Supabase project when they reach main. Each run first proves
-# the migrations on a fresh local database (pgTAP), then pushes them through the `production`
-# GitHub environment, where you can require approval for every run (blueprint: human approval for
-# production schema changes).
+# Applies new migrations when they reach main: first proven on a fresh local database (pgTAP), then
+# applied to staging, then to production. Each target is a GitHub environment, so production can
+# require approval for every run (blueprint: human approval for production schema changes).
+# Staging is skipped with a notice until its environment exists (docs/runbooks/staging.md).
 on:
   push:
     branches: [main]
     paths:
       - supabase/migrations/**
       - .github/workflows/deploy-database.yml
+      - .github/workflows/_deploy-supabase.yml
   workflow_dispatch:
 
 # Never run two schema deployments at once, and never cancel one halfway.
@@ -20,9 +21,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  SUPABASE_CLI_VERSION: 2.101.0
-
 jobs:
   verify:
     name: Test migrations on a fresh database
@@ -32,63 +30,22 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
         with:
-          version: ${{ env.SUPABASE_CLI_VERSION }}
+          version: 2.101.0
       - run: supabase db start
       - run: supabase test db
 
-  deploy:
-    name: Apply migrations to hosted Supabase
+  staging:
     needs: verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: production
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
-        with:
-          version: ${{ env.SUPABASE_CLI_VERSION }}
-      - name: Check secrets are configured
-        run: |
-          missing=""
-          for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID; do
-            [ -n "${!name}" ] || missing="$missing $name"
-          done
-          if [ -n "$missing" ]; then
-            echo "::error title=Missing secrets::Add these to the 'production' environment:$missing"
-            exit 1
-          fi
-          # Shape checks catch common paste mistakes without revealing the values.
-          if ! [[ "$SUPABASE_PROJECT_ID" =~ ^[a-z]{20}$ ]]; then
-            echo "::error title=SUPABASE_PROJECT_ID looks wrong::Use only the 20-letter project ref (the part before .supabase.co), not the URL."
-            exit 1
-          fi
-          if [[ "$SUPABASE_ACCESS_TOKEN" != sbp_* ]]; then
-            echo "::error title=SUPABASE_ACCESS_TOKEN looks wrong::Use a personal access token (starts with sbp_) from Account preferences → Access Tokens, not a project API key."
-            exit 1
-          fi
-      - name: Link project
-        run: |
-          if ! supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD" > link.log 2>&1; then
-            cat link.log
-            # GitHub masks secret values in this output, so the error can be shown as an annotation.
-            echo "::error title=supabase link failed::$(tail -n 4 link.log | tr '\n' ' ')"
-            exit 1
-          fi
-      - name: Show pending migrations
-        run: |
-          supabase migration list --linked
-          supabase db push --linked --dry-run --password "$SUPABASE_DB_PASSWORD"
-      - name: Apply migrations
-        run: supabase db push --linked --password "$SUPABASE_DB_PASSWORD"
-      - name: Summarise deployed migrations
-        run: |
-          {
-            echo "### Migrations on the hosted database"
-            echo '```'
-            supabase migration list --linked
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+    uses: ./.github/workflows/_deploy-supabase.yml
+    with:
+      environment: staging
+      required: false
+    secrets: inherit
+
+  production:
+    needs: staging
+    uses: ./.github/workflows/_deploy-supabase.yml
+    with:
+      environment: production
+      required: true
+    secrets: inherit

@@ -2,8 +2,8 @@ name: CI
 
 on:
   pull_request:
+  # Every branch, so a pushed branch shows red or green before it becomes a pull request.
   push:
-    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}

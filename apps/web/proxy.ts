@@ -62,10 +62,11 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  // Refreshes an expiring session and tells us whether there is one.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Refreshes an expiring session and verifies its JWT locally against the project's published
+  // signing keys (no Auth server round trip). Pages and actions still call getUser(), which also
+  // catches sessions revoked by "sign out everywhere".
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const user = claimsData?.claims?.sub ? claimsData.claims : null;
 
   const redirectTo = (target: string) => {
     const redirect = NextResponse.redirect(new URL(target, request.url));

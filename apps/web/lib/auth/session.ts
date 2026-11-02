@@ -21,19 +21,24 @@ const ROLE_PRIORITY: Record<Role, number> = { owner: 0, client: 1, viewer: 2 };
 /** The signed-in user for this request, or null. Cached per request. */
 export const getViewer = cache(async (): Promise<Viewer | null> => {
   const supabase = await createSupabaseServerClient();
-  // getUser() validates the session with the Auth server instead of trusting the cookie.
-  const { data: userData } = await supabase.auth.getUser();
-  const user = userData.user;
-  if (!user) return null;
+  // The JWT is verified locally first so the database reads can start straight away. getUser()
+  // still decides: it asks the Auth server, which also rejects sessions revoked elsewhere.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
+  if (!userId) return null;
 
-  const [{ data: aalData }, { data: memberships }, { data: profile }] = await Promise.all([
-    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-    supabase
-      .from("memberships")
-      .select("role, workspace_id, workspaces(name)")
-      .eq("user_id", user.id),
-    supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
-  ]);
+  const [{ data: userData }, { data: aalData }, { data: memberships }, { data: profile }] =
+    await Promise.all([
+      supabase.auth.getUser(),
+      supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+      supabase
+        .from("memberships")
+        .select("role, workspace_id, workspaces(name)")
+        .eq("user_id", userId),
+      supabase.from("profiles").select("display_name").eq("id", userId).maybeSingle(),
+    ]);
+  const user = userData.user;
+  if (!user || user.id !== userId) return null;
 
   // Release 1 has a single workspace per user (ADR 0012); prefer the highest role if several.
   const membership = [...(memberships ?? [])].sort(
