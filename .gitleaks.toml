@@ -1,0 +1,13 @@
+# gitleaks configuration: the default rules plus narrow, documented exceptions (ADR 0010).
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = """
+Commit 51260dc added fake credentials as literals in the redaction unit tests. They were never
+real. Later commits build them at runtime instead. Scoped to that one file in that one commit, so a
+real secret added there later is still caught.
+"""
+condition = "AND"
+commits = ["51260dc972b83840cf8307d63940016552d39fa3"]
+paths = ['''^packages/observability/src/observability\.test\.ts$''']

@@ -2,19 +2,25 @@ import { describe, expect, it } from "vitest";
 import { createLogger } from "./logger";
 import { REDACTED, redact, redactString } from "./redact";
 
-const JWT =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSJ9.abcdefghijklmnop";
+// Fake credentials are assembled at runtime so that secret scanners (gitleaks, Semgrep) don't
+// flag this file: the source never contains a complete secret-shaped string.
+const fake = (prefix: string, length: number) => prefix + "x".repeat(length);
+const JWT = [
+  ["eyJ", "hbGciOiJIUzI1NiJ9"].join(""),
+  ["eyJ", "zdWIiOiJ0ZXN0In0"].join(""),
+  "fakesignature0000",
+].join(".");
 
 describe("redactString", () => {
   it.each([
     ["JWT", `token=${JWT}`],
-    ["Bearer header", "Authorization: Bearer abc123def456ghi789"],
-    ["Anthropic key", "key sk-ant-api03-AAAAAAAAAAAAAAAAAAAA"],
-    ["OpenAI key", "sk-proj-AAAAAAAAAAAAAAAAAAAAAAAA"],
-    ["xAI key", "xai-AAAAAAAAAAAAAAAAAAAAAAAA"],
-    ["Google key", "AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],
-    ["Supabase secret", "sb_secret_N7UND0UgjKTVK-Uodkm0Hg"],
-    ["GitHub token", "ghp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],
+    ["Bearer header", `Authorization: Bearer ${fake("tok", 16)}`],
+    ["Anthropic key", `key ${fake("sk-ant-api03-", 20)}`],
+    ["OpenAI key", fake("sk-proj-", 24)],
+    ["xAI key", fake("xai-", 24)],
+    ["Google key", fake("AIza", 35)],
+    ["Supabase secret", fake("sb_secret_", 24)],
+    ["GitHub token", fake("ghp_", 36)],
   ])("removes a %s", (_name, input) => {
     expect(redactString(input)).toContain(REDACTED);
   });
