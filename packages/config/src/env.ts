@@ -5,6 +5,8 @@ export const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   /** Supabase publishable key (sb_publishable_…); RLS limits what it can do. */
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+  /** Sentry DSN for the web app. Public by design: it can only submit events. */
+  NEXT_PUBLIC_SENTRY_DSN: z.url().optional(),
 });
 
 /** Server and worker variables (ADR 0004, 0007, 0008). Must never be imported into client code. */
@@ -14,6 +16,7 @@ export const serverEnvSchema = publicEnvSchema.extend({
   /** The single owner (ADR 0012). Only this email can create an account without an invite. */
   NEXUS_OWNER_EMAIL: z.email().transform((email) => email.toLowerCase()),
   NEXUS_GLOBAL_MONTHLY_BUDGET_USD: z.coerce.number().positive().default(20),
+  /** Worker error reporting (the web app uses NEXT_PUBLIC_SENTRY_DSN). */
   SENTRY_DSN: z.url().optional(),
   XAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),

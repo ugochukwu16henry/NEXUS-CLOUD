@@ -1,18 +1,13 @@
 import type { Instrumentation } from "next";
 
-/** Starts Sentry only when SENTRY_DSN is set; every event is redacted before it leaves the server. */
+/** Starts Sentry only when NEXT_PUBLIC_SENTRY_DSN is set; every event is redacted before it is sent. */
 export async function register() {
-  if (!process.env.SENTRY_DSN) return;
-  const [Sentry, { redact }] = await Promise.all([
+  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
+  const [Sentry, { sentryOptions }] = await Promise.all([
     import("@sentry/nextjs"),
-    import("@nexus/observability"),
+    import("@/lib/sentry"),
   ]);
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
-    tracesSampleRate: 0,
-    beforeSend: (event) => redact(event) as typeof event,
-  });
+  Sentry.init(sentryOptions);
 }
 
 export const onRequestError: Instrumentation.onRequestError = async (error, request, context) => {
