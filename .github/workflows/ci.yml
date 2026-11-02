@@ -7,7 +7,8 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseded PR pushes are cancelled; every commit on main still gets a full run.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -36,7 +37,9 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: web-build
-          path: apps/web/.next
+          path: |
+            apps/web/.next
+            !apps/web/.next/cache
           include-hidden-files: true
           retention-days: 3
 

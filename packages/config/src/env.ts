@@ -25,8 +25,17 @@ export const SERVER_ONLY_ENV_NAMES = Object.keys(serverEnvSchema.shape).filter(
   (name) => !name.startsWith("NEXT_PUBLIC_"),
 );
 
+/**
+ * `.env.example` ships every key with an empty value, so a copied file contains `KEY=` lines.
+ * Treat those as unset: an empty provider key must not look configured, and an empty budget
+ * must fall back to the default instead of failing validation.
+ */
+function dropEmptyValues(source: Record<string, string | undefined>) {
+  return Object.fromEntries(Object.entries(source).filter(([, value]) => value?.trim()));
+}
+
 export function parseServerEnv(source: Record<string, string | undefined>): ServerEnv {
-  const result = serverEnvSchema.safeParse(source);
+  const result = serverEnvSchema.safeParse(dropEmptyValues(source));
   if (!result.success) {
     // Report variable names only, never values.
     const names = result.error.issues.map((issue) => issue.path.join(".")).join(", ");

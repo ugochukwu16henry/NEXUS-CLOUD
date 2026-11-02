@@ -1,17 +1,16 @@
-// Fails if the browser bundle contains server-only env names, their values, or provider key patterns.
-// Threat model T03 / NFR-01. Run after `pnpm build`.
-import { readdirSync, readFileSync, statSync } from "node:fs";
+// Fails if anything the browser receives contains server-only env names, their values, or provider
+// key patterns. Threat model T03 / NFR-01. Run after `pnpm build`.
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+// Single source of truth for which variables are server-only (Node 24 strips the TS types).
+import { SERVER_ONLY_ENV_NAMES } from "../packages/config/src/env.ts";
 
-const STATIC_DIR = "apps/web/.next/static";
+const NEXT_DIR = process.argv[2] ?? "apps/web/.next";
 
-const SERVER_ONLY_NAMES = [
-  "SUPABASE_SERVICE_ROLE_KEY",
-  "XAI_API_KEY",
-  "ANTHROPIC_API_KEY",
-  "OPENAI_API_KEY",
-  "GEMINI_API_KEY",
-  "DEEPSEEK_API_KEY",
+// Client chunks, plus pre-rendered HTML and RSC payloads that are served to browsers as-is.
+const SCAN_TARGETS = [
+  { dir: join(NEXT_DIR, "static"), extensions: /\.(js|css|html|json)$/ },
+  { dir: join(NEXT_DIR, "server", "app"), extensions: /\.(html|rsc|body)$/ },
 ];
 
 const KEY_PATTERNS = [
@@ -29,22 +28,23 @@ function walk(dir) {
   });
 }
 
-let files;
-try {
-  files = walk(STATIC_DIR).filter((f) => /\.(js|css|html|json)$/.test(f));
-} catch {
-  console.error(`No bundle at ${STATIC_DIR}. Run "pnpm build" first.`);
+if (!existsSync(join(NEXT_DIR, "static"))) {
+  console.error(`No build at ${NEXT_DIR}. Run "pnpm build" first.`);
   process.exit(1);
 }
 
-const secretValues = SERVER_ONLY_NAMES.map((name) => process.env[name]).filter(
+const files = SCAN_TARGETS.flatMap(({ dir, extensions }) =>
+  existsSync(dir) ? walk(dir).filter((f) => extensions.test(f)) : [],
+);
+
+const secretValues = SERVER_ONLY_ENV_NAMES.map((name) => process.env[name]).filter(
   (value) => value && value.length >= 8,
 );
 
 const problems = [];
 for (const file of files) {
   const text = readFileSync(file, "utf8");
-  for (const name of SERVER_ONLY_NAMES) {
+  for (const name of SERVER_ONLY_ENV_NAMES) {
     if (text.includes(name)) problems.push(`${file}: contains env name ${name}`);
   }
   for (const value of secretValues) {
@@ -56,7 +56,7 @@ for (const file of files) {
 }
 
 if (problems.length) {
-  console.error("Server-only secrets found in browser bundle:\n" + problems.join("\n"));
+  console.error("Server-only secrets found in browser-facing output:\n" + problems.join("\n"));
   process.exit(1);
 }
 console.log(`Bundle secret check passed (${files.length} files scanned).`);

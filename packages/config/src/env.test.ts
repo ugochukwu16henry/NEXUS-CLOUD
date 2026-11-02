@@ -12,16 +12,33 @@ describe("parseServerEnv", () => {
     expect(parseServerEnv(valid).NEXUS_GLOBAL_MONTHLY_BUDGET_USD).toBe(20);
   });
 
-  it("names missing variables without leaking values", () => {
+  it("names missing variables", () => {
     const { SUPABASE_SERVICE_ROLE_KEY: _omit, ...missing } = valid;
-    expect(() => parseServerEnv({ ...missing, NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon" })).toThrow(
+    expect(() => parseServerEnv(missing)).toThrow(/SUPABASE_SERVICE_ROLE_KEY/);
+  });
+
+  it("does not leak secret values in validation errors", () => {
+    const parse = () => parseServerEnv({ ...valid, NEXT_PUBLIC_SUPABASE_URL: "not-a-url" });
+    expect(parse).toThrow(/NEXT_PUBLIC_SUPABASE_URL/);
+    expect(parse).not.toThrow(/service-role-secret-value/);
+  });
+
+  it("treats empty values from a copied .env.example as unset", () => {
+    const env = parseServerEnv({
+      ...valid,
+      ANTHROPIC_API_KEY: "",
+      OPENAI_API_KEY: "   ",
+      NEXUS_GLOBAL_MONTHLY_BUDGET_USD: "",
+    });
+    expect(env.ANTHROPIC_API_KEY).toBeUndefined();
+    expect(env.OPENAI_API_KEY).toBeUndefined();
+    expect(env.NEXUS_GLOBAL_MONTHLY_BUDGET_USD).toBe(20);
+  });
+
+  it("still requires the service-role key when it is empty", () => {
+    expect(() => parseServerEnv({ ...valid, SUPABASE_SERVICE_ROLE_KEY: "" })).toThrow(
       /SUPABASE_SERVICE_ROLE_KEY/,
     );
-    try {
-      parseServerEnv({ ...valid, NEXT_PUBLIC_SUPABASE_URL: "not-a-url" });
-    } catch (error) {
-      expect(String(error)).not.toContain("service-role-secret-value");
-    }
   });
 
   it("rejects a non-positive budget", () => {

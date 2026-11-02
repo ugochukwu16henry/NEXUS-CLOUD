@@ -38,8 +38,9 @@ export default function CockpitPrototype() {
         <span className="ml-auto rounded border border-nx-warn/50 px-2 py-0.5 text-xs text-nx-warn">
           Prototype · sample data
         </span>
-        <span className="text-xs text-nx-muted" aria-label={`Budget used ${budgetPercent} percent`}>
+        <span className="text-xs text-nx-muted">
           ${PROJECT.budgetUsedUsd.toFixed(2)} / ${PROJECT.budgetLimitUsd} budget
+          <span className="sr-only"> ({budgetPercent}% used)</span>
         </span>
       </header>
 
@@ -74,11 +75,9 @@ export default function CockpitPrototype() {
               <li key={file.path} className="flex justify-between gap-2 px-1 py-1">
                 <span className="truncate">{file.path}</span>
                 {file.status && (
-                  <span
-                    className={file.status === "A" ? "text-nx-ok" : "text-nx-warn"}
-                    aria-label={file.status === "A" ? "added" : "modified"}
-                  >
-                    {file.status}
+                  <span className={file.status === "A" ? "text-nx-ok" : "text-nx-warn"}>
+                    <span aria-hidden="true">{file.status}</span>
+                    <span className="sr-only">{file.status === "A" ? "added" : "modified"}</span>
                   </span>
                 )}
               </li>

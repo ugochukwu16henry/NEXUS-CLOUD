@@ -13,6 +13,11 @@ def escape(text):
     return text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
+def escape_property(text):
+    # Property values (file=, title=) also need ':' and ',' escaped, or the annotation is malformed.
+    return escape(text).replace(":", "%3A").replace(",", "%2C")
+
+
 with open(sys.argv[1], encoding="utf-8") as f:
     report = json.load(f)
 
@@ -23,7 +28,7 @@ for r in results:
     extra = r.get("extra", {})
     level = LEVELS.get(extra.get("severity", "WARNING"), "warning")
     message = escape(f"{r['check_id']}: {extra.get('message', '')}")
-    print(f"::{level} file={r['path']},line={r['start']['line']},title=Semgrep::{message}")
+    print(f"::{level} file={escape_property(r['path'])},line={r['start']['line']},title=Semgrep::{message}")
 
 for e in errors:
     print(f"::error title=Semgrep error::{escape(e.get('message', str(e)))[:1000]}")
