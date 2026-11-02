@@ -4,6 +4,7 @@ name: Deploy database
 # applied to staging, then to production. Each target is a GitHub environment, so production can
 # require approval for every run (blueprint: human approval for production schema changes).
 # Staging is skipped with a notice until its environment exists (docs/runbooks/staging.md).
+# No secrets are passed in: each deploy job reads only its own GitHub environment's secrets.
 on:
   push:
     branches: [main]
@@ -40,7 +41,6 @@ jobs:
     with:
       environment: staging
       required: false
-    secrets: inherit
 
   production:
     needs: staging
@@ -48,4 +48,3 @@ jobs:
     with:
       environment: production
       required: true
-    secrets: inherit

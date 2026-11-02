@@ -12,6 +12,14 @@ on:
         description: When false, a missing environment is skipped with a notice instead of failing.
         type: boolean
         default: true
+    # Declared so the job may reference them; values come from the job's GitHub environment.
+    secrets:
+      SUPABASE_ACCESS_TOKEN:
+        required: false
+      SUPABASE_PROJECT_ID:
+        required: false
+      SUPABASE_DB_PASSWORD:
+        required: false
 
 permissions:
   contents: read
