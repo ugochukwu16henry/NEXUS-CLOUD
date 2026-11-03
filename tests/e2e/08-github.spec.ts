@@ -66,6 +66,8 @@ test.describe("GitHub integration", () => {
   });
 
   test("owner connects GitHub through a verified installation", async ({ page }) => {
+    // Several round trips through the fake GitHub plus two accessibility scans: slower on CI.
+    test.setTimeout(90_000);
     const secret = await ensureMfa(page);
     await page.goto("/settings/integrations");
     await expect(page.getByRole("heading", { level: 1, name: "Integrations" })).toBeVisible();

@@ -87,7 +87,10 @@ export function TerminalPanel({
       </form>
       <FormMessage state={state} />
       {!workerUrl && (
-        <p className="text-xs text-nx-muted">Set WORKER_WS_URL to connect the shell.</p>
+        <p className="text-xs text-nx-muted">
+          The terminal isn&apos;t connected on this server yet: set the worker&apos;s address in the
+          web app&apos;s settings (see the agents runbook).
+        </p>
       )}
       <div ref={host} className="h-48 overflow-hidden rounded border border-nx-border" />
     </section>
