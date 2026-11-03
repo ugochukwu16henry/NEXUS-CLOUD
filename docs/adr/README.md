@@ -16,5 +16,6 @@
 | [0012](0012-personal-first.md)              | Personal workflow before SaaS                                   |
 | [0013](0013-server-only-sessions.md)        | Server-only sessions in HttpOnly cookies                        |
 | [0014](0014-api-surface-and-test-layers.md) | API surface and test layers (server actions, no public API yet) |
+| [0015](0015-nexus-ai-hub-integration.md)    | Bring Nexus AI Hub into the platform                            |
 
 New ADRs copy the format of an existing one and take the next number. Superseded ADRs keep their file and change status.

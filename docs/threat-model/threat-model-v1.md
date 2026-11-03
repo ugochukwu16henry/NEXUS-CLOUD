@@ -1,6 +1,6 @@
 # Threat Model v1 (STRIDE)
 
-- **Date:** 2026-11-02 · **Scope:** Release 1 architecture (ADRs 0001–0012) · **Review:** every sprint that adds a trust boundary
+- **Date:** 2026-11-02 · **Scope:** Release 1 architecture (ADRs 0001–0015), Nexus Cloud and Nexus AI Hub · **Review:** every sprint that adds a trust boundary
 - **Method:** STRIDE per trust boundary. Every threat lists a control and the sprint whose tests prove that control.
 
 ## 1. Assets
@@ -14,6 +14,8 @@
 | Client data and unreleased work                | Confidentiality, client trust          |
 | Audit log                                      | Accountability; must be tamper-evident |
 | Budget/usage ledger                            | Cost control                           |
+| Hub customer data, wallets and ledger (Naira)  | Customers' money; NDPA personal data   |
+| Hub payment gateway secrets (Paystack)         | Can confirm payments; credits wallets  |
 
 ## 2. Trust boundaries and data flow
 
@@ -36,6 +38,9 @@
 | B5  | Worker ↔ GitHub/Vercel/Railway | Third-party responses                                 |
 | B6  | Webhooks → API                 | Anyone on the internet                                |
 | B7  | Agent context ↔ policy engine  | Repo files, issues, web pages, uploads                |
+| B8  | Public browser ↔ Hub API       | Anyone who signs up for Nexus AI Hub (customer zone)  |
+| B9  | Payment webhooks → Hub API     | Anyone on the internet posing as Paystack/Flutterwave |
+| B10 | Staff zone ↔ Hub database      | The Owner Dashboard reading customer data             |
 
 ## 3. Threats and controls
 
@@ -63,6 +68,14 @@
 | T20 | Tampering       | B2       | Destructive migration in production              | Reviewed migrations, backups, approval gate                                                | Sprints 1, 12    |
 | T21 | Info disclosure | all      | Secrets leaked into logs                         | Redacting logger; log-scan tests; gitleaks                                                 | Sprints 0, 1     |
 | T22 | Tampering       | repo     | Secret committed to Nexus repo                   | gitleaks pre-commit and CI                                                                 | Sprint 0         |
+| T23 | Elevation       | B8/B1    | A Hub customer reaches the agent cloud           | Separate Supabase projects and identities; no shared sessions or keys (ADR 0015)           | Harmonization    |
+| T24 | Spoofing        | B9       | Forged or replayed payment webhook credits money | HMAC-SHA512 signature, server-side verify call, one credit per reference (unique key)      | Hub Phase 0      |
+| T25 | Tampering       | B8       | Double spend or race on a wallet                 | Holds in short transactions, one capture per job, balance never below zero (CHECK)         | Hub Phase 0      |
+| T26 | Info disclosure | B8       | Hub tables read through Supabase's Data API      | RLS on every table, API roles revoked; security test on every migration                    | Hub Phase 0      |
+| T27 | Info disclosure | B10      | Owner Dashboard leaks customer data              | `business:read` owner-only with MFA; server-side read-only DB role, never in the browser   | Harm., Hub S5    |
+| T28 | Elevation       | B8       | Harmful generated content (deepfakes, minors)    | Prompt moderation, provider filters, reporting, 18+ only, logs kept                        | Hub Sprints 3–4  |
+| T29 | DoS             | B8/B9    | Card testing, chargebacks, fraudulent top-ups    | Velocity limits on new accounts, no withdrawals or transfers, unusual-spend review         | Hub Sprint 2     |
+| T30 | DoS             | B4       | Hub traffic drains the agents' provider budget   | Separate provider keys and budgets per zone; gateway reports usage per zone                | Harmonization    |
 
 ## 4. Residual risks (accepted for now)
 
@@ -71,9 +84,10 @@
 
 ## 5. Review log
 
-| Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-11-02 | v1 created in Sprint 0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| 2026-11-02 | Sprint 1: T01, T02 (workspace level), T03, T04, T05, T21 implemented and tested. Sign-up is closed at the database (allowlist trigger) and sessions are HttpOnly (ADR 0013). Finding: in the local Postgres image, a denied function call after `SET ROLE anon` in a superuser session crashes the backend. Through PostgREST (the real attack surface) the same call returns 401 and the server stays up. It is not exploitable by API users; worth re-checking on hosted Supabase in Sprint 12.                                        |
-| 2026-11-03 | Proxy now verifies JWTs locally (`getClaims`, ES256) for speed; pages and actions still call `getUser`, so revoked sessions are rejected server-side. A revoked but unexpired session caused a redirect loop (proxy sent `/login` to `/`, the page sent it back); fixed by moving that redirect into the login page. Covered by an E2E regression test.                                                                                                                                                                                  |
-| 2026-11-03 | Sentry added for the browser as well as the server (T21). User data collection is off, every event passes the shared redaction (`apps/web/lib/sentry.ts`, unit-tested), and tracing and replay are off. Browser events go through the same-origin `/monitoring` tunnel, so the CSP stays at `connect-src 'self'`. The proxy skips only that exact path. The DSN is public (`NEXT_PUBLIC_SENTRY_DSN`). The auth token stays in Vercel (Sensitive) and in the gitignored `.env.sentry-build-plugin`. Source maps are deleted after upload. |
+| Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-02 | v1 created in Sprint 0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 2026-11-02 | Sprint 1: T01, T02 (workspace level), T03, T04, T05, T21 implemented and tested. Sign-up is closed at the database (allowlist trigger) and sessions are HttpOnly (ADR 0013). Finding: in the local Postgres image, a denied function call after `SET ROLE anon` in a superuser session crashes the backend. Through PostgREST (the real attack surface) the same call returns 401 and the server stays up. It is not exploitable by API users; worth re-checking on hosted Supabase in Sprint 12.                                                                                              |
+| 2026-11-03 | Proxy now verifies JWTs locally (`getClaims`, ES256) for speed; pages and actions still call `getUser`, so revoked sessions are rejected server-side. A revoked but unexpired session caused a redirect loop (proxy sent `/login` to `/`, the page sent it back); fixed by moving that redirect into the login page. Covered by an E2E regression test.                                                                                                                                                                                                                                        |
+| 2026-11-03 | Sentry added for the browser as well as the server (T21). User data collection is off, every event passes the shared redaction (`apps/web/lib/sentry.ts`, unit-tested), and tracing and replay are off. Browser events go through the same-origin `/monitoring` tunnel, so the CSP stays at `connect-src 'self'`. The proxy skips only that exact path. The DSN is public (`NEXT_PUBLIC_SENTRY_DSN`). The auth token stays in Vercel (Sensitive) and in the gitignored `.env.sentry-build-plugin`. Source maps are deleted after upload.                                                       |
+| 2026-11-03 | Harmonization sprint (ADR 0015): Nexus AI Hub joins as a separate **customer zone** (B8–B10, T23–T30), with its own database, identities and provider keys. T24–T26 are already covered by the Hub's Phase 0 tests, now run in CI on PostgreSQL 17. T27 is part-implemented: `business:read` is owner-only and needs MFA, with an E2E test; the read-only database role follows in Hub Sprint 5. T30 is designed into `@nexus/model-gateway` (one gateway per zone). The Sprint 1 local-image crash also affects the Hub's role-switch probe, so that probe runs only on plain Postgres in CI. |

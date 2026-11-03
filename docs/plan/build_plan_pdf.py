@@ -113,7 +113,7 @@ def cover(canv, doc):
     canv.setFillColor(colors.HexColor("#CBD5E1"))
     canv.drawString(28 * mm, h - 112 * mm, "Derived from the Concept Development & Technical Architecture Blueprint v1.0")
     lines = [("Prepared for", "Henry Ugochukwu (owner, architect, developer, tester, PM)"),
-             ("Version", "1.0  ·  28 October 2026"),
+             ("Version", "1.1  ·  3 November 2026 (adds Nexus AI Hub, ADR 0015)"),
              ("Status", "Approved for planning — awaiting the go-ahead for Sprint 0"),
              ("Cadence", "Sprint 0 = 1 week; Sprints 1–13 = 2 weeks each (solo developer + AI agents)")]
     y = h - 150 * mm
@@ -143,7 +143,7 @@ def page(canv, doc):
     canv.drawString(15 * mm, h - 7.5 * mm, "PROJECT NEXUS CLOUD")
     canv.setFont("Body", 8)
     canv.setFillColor(colors.HexColor("#94A3B8"))
-    canv.drawRightString(w - 15 * mm, h - 7.5 * mm, "Structure · Sprint Plan · SDLC Test Strategy  —  v1.0")
+    canv.drawRightString(w - 15 * mm, h - 7.5 * mm, "Structure · Sprint Plan · SDLC Test Strategy  —  v1.1")
     canv.setFillColor(MUTED)
     canv.drawString(15 * mm, 9 * mm, "Derived from Blueprint v1.0 (27 Oct 2026)")
     canv.drawRightString(w - 15 * mm, 9 * mm, "Page %d" % doc.page)
@@ -306,28 +306,47 @@ story += [P("2.5 Data model (initial migrations)", "h2"),
 # 3 ---------------------------------------------------------------------
 story += [PageBreak(), P("3. Release Roadmap Overview", "h1"),
           P("Blueprint phases are mapped onto sprints. Sprint 0 lasts one week; every other sprint is two weeks. Total to Release 1.0: "
-            "about 27 weeks (~6.5 months) for one developer working with AI agents. Re-baseline after Sprint 3 using measured velocity."),
+            "about 28 weeks (~7 months) for one developer working with AI agents, including the one-week harmonization sprint that brings in Nexus AI Hub (ADR 0015). Re-baseline after Sprint 3 using measured velocity."),
           table([["Sprint", "Weeks", "Blueprint phase", "Sprint goal", "Milestone"],
                  ["0", "1", "0. Foundation", "Decisions, tooling, CI skeleton, threat model, UI prototype, provider benchmark plan", "M0 Foundation agreed"],
                  ["1", "2–3", "1. Project cockpit", "Auth, app shell (dark cockpit), Supabase schema + RLS, audit log", ""],
                  ["2", "4–5", "1. Project cockpit", "Projects, requirements, tasks, milestones, board, activity timeline", "M1 Cockpit reliable"],
-                 ["3", "6–7", "2. Repository workspace", "GitHub App, repo import, branches, webhooks inbox", ""],
-                 ["4", "8–9", "2. Repository workspace", "File tree, Monaco editor, diffs, worktrees, safe commit/revert", "M2 Traceable, reversible change"],
-                 ["5", "10–11", "3. AI vertical slice", "Model gateway, 2 provider adapters, router, usage ledger, budget guard", ""],
-                 ["6", "12–13", "3. AI vertical slice", "Queue, sandbox worker, planner + coding agent, bounded diff", "M3 Agent produces reviewable code"],
-                 ["7", "14–15", "4. Quality gates", "Build/lint/test runners, Playwright, scanners, review + test agents, gates", "M4 Failed checks block release"],
-                 ["8", "16–17", "5. Preview deploy", "Vercel previews, Railway status, release gate, evidence bundle", "M5 First demo (MVP)"],
-                 ["9", "18–19", "6. Client portal", "Invites, approved milestones, previews, feedback, sign-off", "M6 Client reviews securely"],
-                 ["10", "20–21", "Agents completion", "Research, architect, UX, security, docs, release, client-reporter agents; full workflow board", ""],
-                 ["11", "22–23", "7. Marketing studio", "Copy generation, media adapters, asset library, approval queue", "M7 Assets costed and approved"],
-                 ["12", "24–25", "8. Hardening", "Fallback, retries, backups + restore drill, monitoring, load and security tests", ""],
-                 ["13", "26–27", "8. Hardening / release", "UAT on a real project, bug bash, docs, release 1.0", "M8 Release 1.0 (stable use)"],
+                 ["2H", "6", "Platform", "Harmonization: Nexus AI Hub joins the monorepo; shared money and gateway packages; Owner Dashboard shell; two themes", "One platform, two zones"],
+                 ["3", "7–8", "2. Repository workspace", "GitHub App, repo import, branches, webhooks inbox", ""],
+                 ["4", "9–10", "2. Repository workspace", "File tree, Monaco editor, diffs, worktrees, safe commit/revert", "M2 Traceable, reversible change"],
+                 ["5", "11–12", "3. AI vertical slice", "Model gateway, 2 provider adapters, router, usage ledger, budget guard", ""],
+                 ["6", "13–14", "3. AI vertical slice", "Queue, sandbox worker, planner + coding agent, bounded diff", "M3 Agent produces reviewable code"],
+                 ["7", "15–16", "4. Quality gates", "Build/lint/test runners, Playwright, scanners, review + test agents, gates", "M4 Failed checks block release"],
+                 ["8", "17–18", "5. Preview deploy", "Vercel previews, Railway status, release gate, evidence bundle", "M5 First demo (MVP)"],
+                 ["9", "19–20", "6. Client portal", "Invites, approved milestones, previews, feedback, sign-off", "M6 Client reviews securely"],
+                 ["10", "21–22", "Agents completion", "Research, architect, UX, security, docs, release, client-reporter agents; full workflow board", ""],
+                 ["11", "23–24", "7. Marketing studio", "Copy generation, media adapters, asset library, approval queue", "M7 Assets costed and approved"],
+                 ["12", "25–26", "8. Hardening", "Fallback, retries, backups + restore drill, monitoring, load and security tests", ""],
+                 ["13", "27–28", "8. Hardening / release", "UAT on a real project, bug bash, docs, release 1.0", "M8 Release 1.0 (stable use)"],
                  ["14+", "later", "9. Optional SaaS", "Organizations, billing, quotas, tenant isolation, legal workflows", "Gated by security/legal/load review"]],
                 [13, 14, 32, 89, 32]),
           P("The blueprint's <i>First 30 Days</i> plan (weeks 1–4) is a compressed path to a demo. This plan keeps the same order but "
             "spreads it over Sprints 0–8 so that every step has tests, security controls and evidence — the blueprint's own rule that "
             "failures must never be hidden. If a faster demo is needed, Sprints 3–8 can each drop their stretch items (marked "
-            "<i>stretch</i>) without removing tests.", "callout")]
+            "<i>stretch</i>) without removing tests.", "callout"),
+          P("Nexus AI Hub track (customer zone)", "h2"),
+          P("Nexus AI Hub, formerly Zentrix AI Hub, is the public product: pay-as-you-go AI video, images, coding help and study help "
+            "in Naira. It follows its own plan (<i>Zentrix AI Hub – Development Concept and Production Plan</i> v1.0, 13 Oct 2026) "
+            "and runs in parallel with the sprints above once the harmonization sprint is done. The two share the monorepo, CI, "
+            "brand family, AI gateway and money package, but never identities, databases or provider keys (ADR 0015)."),
+          table([["Hub sprint", "Goal", "Depends on (Nexus Cloud)"],
+                 ["Phase 0 (done)", "Schema, wallet and ledger, pricing engine, Paystack webhook; now apps/hub-api", "—"],
+                 ["1", "Customer accounts (email/phone OTP, Google), 18+ check, wallet API; apps/hub-web starts", "2H"],
+                 ["2", "Money in: Paystack checkout, bundles, receipts, wallet history, reconciliation jobs", "—"],
+                 ["3", "AI gateway with the xAI adapter, moderation, images; gallery", "5 (shared model gateway)"],
+                 ["4", "Video: job queue, text- and image-to-video, live prices, automatic refunds", "6 (shared pg-boss worker pattern)"],
+                 ["5", "Owner Dashboard v1 on real data (in Nexus Cloud under /owner), pricing control, closed beta", "2H (Business area)"],
+                 ["6–9", "Developer Console, app builder, Student Academy, referrals, public launch", "—"],
+                 ["10–13", "Public API, only with written provider approval", "—"],
+                 ["14–17", "Mobile apps, more African markets, WhatsApp, teams", "—"]],
+                [24, 104, 52]),
+          P("Agents stay staff-only: Zentrix staff reach the Nexus agent dashboard from the Hub's \"Developer agent\" entry. Opening "
+            "agents to paying public developers is a later phase behind the ADR 0012 security, legal and load review.", "callout")]
 
 # 4 ---------------------------------------------------------------------
 SPRINTS = [
@@ -399,7 +418,28 @@ SPRINTS = [
          ],
          exit="M1: project and task management works reliably; state machine fully covered; no P1/P2 defects open.",
          demo="Run a mock project from Backlog to Closed by hand, showing gates and the timeline."),
-    dict(n="3", name="GitHub Integration", weeks="Weeks 6–7",
+    dict(n="2H", name="Harmonization: Nexus AI Hub joins the platform", weeks="Week 6 (1 week)",
+         goal="Bring Nexus AI Hub (formerly Zentrix AI Hub) into this monorepo as a separate customer zone, so both products share one toolchain, CI standard, brand family, AI gateway and money package without sharing identities, databases or keys (ADR 0015).",
+         stories=[
+             "Import the Hub with its Git history into <font face='Mono'>apps/hub-api</font>; migrations move to <font face='Mono'>apps/hub-api/supabase/migrations</font>.",
+             "Align the toolchain: pnpm 11 with the release-age rule, TypeScript 6, Vitest, ESLint and Prettier; NestJS injection made explicit so esbuild and Vitest need no decorator metadata.",
+             "Extract <font face='Mono'>@nexus/money</font> (kobo, FX, VAT, margins) and define <font face='Mono'>@nexus/model-gateway</font>: one interface, one gateway per zone, usage reported per call.",
+             "Nexus Cloud navigation gets Business and Engineering areas; Owner Dashboard shell at /owner behind owner-only, MFA-gated <font face='Mono'>business:read</font>.",
+             "Design tokens gain the Ink &amp; Cobalt theme (light and dark) beside the dark Console theme; Geist and Geist Mono for both.",
+             "Hub database deploy workflow (hub-staging, then hub-production) using the shared Supabase deploy action.",
+             "Threat model: customer zone boundaries B8–B10 and threats T23–T30.",
+         ],
+         deliverables="apps/hub-api in the monorepo with green CI, packages/money, packages/model-gateway, Owner Dashboard shell, two themes, Hub deploy workflow and runbook, updated threat model and plan.",
+         tests=[
+             ["Unit", "Money arithmetic (kobo rounding, FX parsing, margins) in the shared package; gateway routes per provider, reports usage once, refuses unconfigured providers; permission matrix includes business:read; margin guard reproduces the Hub plan's margins (57% video, 89% student)."],
+             ["Integration", "Hub money path on a fresh PostgreSQL 17 in CI: hold, capture, release, webhook replay credits once, schema lockdown (RLS on every table, API roles see nothing)."],
+             ["E2E", "Owner signs in once, passes MFA, opens the Owner Dashboard, sees the margin guard, follows Developer agent to the agent dashboard; axe clean."],
+             ["Accessibility", "Every text colour meets 4.5:1 on every surface in all three themes (automated, parsed from the token CSS)."],
+             ["Smoke", "The bundled Hub API starts; /health OK; /products lists prices; an unsigned Paystack webhook returns 401."],
+         ],
+         exit="Both products build, lint, typecheck and test in one CI; the zones share no identity, database or provider key; the Owner Dashboard is reachable from Nexus Cloud with MFA.",
+         demo="One sign-in: Business (Owner Dashboard) and Engineering (agent cockpit) side by side; the Hub's money-path tests running in the same pipeline."),
+    dict(n="3", name="GitHub Integration", weeks="Weeks 7–8",
          goal="Connect real repositories with minimum permissions and keep their state in sync.",
          stories=[
              "Register a GitHub App with repository-scoped permissions (contents r/w, pull requests r/w, checks r, metadata r); installation flow.",
@@ -420,7 +460,7 @@ SPRINTS = [
          ],
          exit="A real repo is connected with least privilege; webhooks are verified, idempotent and audited.",
          demo="Install the app on a pilot repo, push a commit and watch it appear; show a rejected forged webhook."),
-    dict(n="4", name="Repository Workspace", weeks="Weeks 8–9",
+    dict(n="4", name="Repository Workspace", weeks="Weeks 9–10",
          goal="Browse, edit and diff code safely, with every change traceable and reversible (M2).",
          stories=[
              "File explorer with search, changed-files view, artifact list.",
@@ -441,7 +481,7 @@ SPRINTS = [
          ],
          exit="M2: a traceable change can be created and reversed; no write outside the task branch is possible.",
          demo="Make an edit, review the diff, commit, open a PR, then revert it — all traced in the timeline."),
-    dict(n="5", name="Model Gateway and Cost Control", weeks="Weeks 10–11",
+    dict(n="5", name="Model Gateway and Cost Control", weeks="Weeks 11–12",
          goal="One internal API for all models, with routing, usage tracking and hard budget limits — before any agent can spend money.",
          stories=[
              "Gateway interface: chat/complete, structured output (JSON schema), tool calling, streaming, cancellation.",
@@ -463,7 +503,7 @@ SPRINTS = [
          ],
          exit="No model call can bypass the gateway, ledger or budget guard; benchmark winners chosen with evidence.",
          demo="Run the same prompt on two models, compare cost and output, then hit the hard stop."),
-    dict(n="6", name="Agents Vertical Slice", weeks="Weeks 12–13",
+    dict(n="6", name="Agents Vertical Slice", weeks="Weeks 13–14",
          goal="A planner and a coding agent turn a feature request into an approved plan and a reviewable, bounded diff (M3).",
          stories=[
              "Durable job queue (pg-boss): enqueue, retry with backoff, cancellation, timeouts, dead-letter, idempotency keys.",
@@ -485,7 +525,7 @@ SPRINTS = [
          ],
          exit="M3: agent produces reviewable code with recorded usage; unsafe actions provably blocked.",
          demo="Feature request to approved plan to diff on the pilot repo, with cost displayed."),
-    dict(n="7", name="Quality Gates", weeks="Weeks 14–15",
+    dict(n="7", name="Quality Gates", weeks="Weeks 15–16",
          goal="Automated checks and independent review run on every agent diff, and failures block progress (M4).",
          stories=[
              "Quality runner in sandbox: install, typecheck, lint, unit tests, build for the target repo; parse JUnit/JSON reports.",
@@ -507,7 +547,7 @@ SPRINTS = [
          ],
          exit="M4: failed checks block release; every gate decision has evidence.",
          demo="Show a blocked diff with a vulnerable dependency, fix it, and show the gate passing."),
-    dict(n="8", name="Preview Deploy and First Demo (MVP)", weeks="Weeks 16–17",
+    dict(n="8", name="Preview Deploy and First Demo (MVP)", weeks="Weeks 17–18",
          goal="Safe preview deployments with a release gate, completing the blueprint's 'best first demo' (M5).",
          stories=[
              "Vercel adapter: link project, trigger preview from task branch, fetch status and preview URL, deployment history.",
@@ -529,7 +569,7 @@ SPRINTS = [
          ],
          exit="M5: safe preview without accidental production change; MVP demo signed off.",
          demo="The complete 'best first demo' end to end on the pilot repo."),
-    dict(n="9", name="Client Portal", weeks="Weeks 18–19",
+    dict(n="9", name="Client Portal", weeks="Weeks 19–20",
          goal="Clients review approved progress securely and give feedback and sign-off (M6).",
          stories=[
              "Invite-only access: expiring single-use invite links (token hashed), client role per project.",
@@ -550,7 +590,7 @@ SPRINTS = [
          ],
          exit="M6: client can review securely; zero cross-project data exposure in tests.",
          demo="Invite a test client, review a milestone and sign off, then show the denied cross-project attempt."),
-    dict(n="10", name="Specialist Agents and Full Workflow", weeks="Weeks 20–21",
+    dict(n="10", name="Specialist Agents and Full Workflow", weeks="Weeks 21–22",
          goal="Complete the agent roster with handoffs and gates so the full workflow board runs end to end.",
          stories=[
              "Intake & requirements agent (clarifying questions → approved requirements brief).",
@@ -571,7 +611,7 @@ SPRINTS = [
          ],
          exit="Every workflow state reachable with evidence; agent outputs schema-valid; no hidden failures.",
          demo="One feature flows through all agents with evidence at each gate."),
-    dict(n="11", name="Marketing Studio", weeks="Weeks 22–23",
+    dict(n="11", name="Marketing Studio", weeks="Weeks 23–24",
          goal="Draft marketing copy and media assets that are costed, reviewed and approved before any use (M7).",
          stories=[
              "Positioning, audience profiles, value propositions, landing copy, FAQs, feature descriptions, launch plans from approved product facts.",
@@ -590,7 +630,7 @@ SPRINTS = [
          ],
          exit="M7: assets are costed and approved; nothing publishes without a human.",
          demo="Create a launch kit for the pilot product with costs shown."),
-    dict(n="12", name="Hardening", weeks="Weeks 24–25",
+    dict(n="12", name="Hardening", weeks="Weeks 25–26",
          goal="Make the system dependable for real projects: resilience, recovery, performance and security assurance.",
          stories=[
              "Provider fallback and retry policies tuned; circuit breaker and status indicator per provider.",
@@ -611,7 +651,7 @@ SPRINTS = [
          ],
          exit="Load, recovery and security targets met and recorded.",
          demo="Kill a worker live, show recovery; show restore drill results and dashboards."),
-    dict(n="13", name="UAT and Release 1.0", weeks="Weeks 26–27",
+    dict(n="13", name="UAT and Release 1.0", weeks="Weeks 27–28",
          goal="Prove stable use on a real project and release version 1.0 (M8).",
          stories=[
              "User acceptance testing on a real (owned) project for at least one full week.",

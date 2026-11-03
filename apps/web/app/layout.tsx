@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import "./globals.css";
@@ -8,13 +9,17 @@ export const metadata: Metadata = {
   description: "Personal AI-powered software engineering cloud",
 };
 
+// Self-hosted by Next.js at build time (CSP font-src 'self'); the token CSS reads these variables.
+const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
+
 export default async function RootLayout({ children }: { children: ReactNode }) {
   // Reading request headers renders every page per request, so each response carries the CSP nonce
   // set by proxy.ts. A pre-rendered page would ship scripts without the nonce and be blocked.
   await headers();
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased">
         <a
           href="#main"

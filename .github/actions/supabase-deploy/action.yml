@@ -18,6 +18,12 @@ inputs:
   db-password:
     description: Database password.
     required: false
+  workdir:
+    description: Directory holding the project's supabase/ folder ("." for Nexus Cloud, apps/hub-api for Nexus AI Hub).
+    default: "."
+  runbook:
+    description: Where the missing-secrets notice points.
+    default: docs/runbooks/staging.md
 runs:
   using: composite
   steps:
@@ -27,6 +33,7 @@ runs:
       env:
         TARGET: ${{ inputs.target }}
         REQUIRED: ${{ inputs.required }}
+        RUNBOOK: ${{ inputs.runbook }}
         SUPABASE_ACCESS_TOKEN: ${{ inputs.access-token }}
         SUPABASE_PROJECT_ID: ${{ inputs.project-id }}
         SUPABASE_DB_PASSWORD: ${{ inputs.db-password }}
@@ -40,7 +47,7 @@ runs:
             echo "::error title=Missing secrets::Add these to the '$TARGET' environment:$missing"
             exit 1
           fi
-          echo "::notice title=$TARGET not configured::Skipping $TARGET. Add$missing to the '$TARGET' environment to deploy there (docs/runbooks/staging.md)."
+          echo "::notice title=$TARGET not configured::Skipping $TARGET. Add$missing to the '$TARGET' environment to deploy there ($RUNBOOK)."
           echo "configured=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
@@ -66,19 +73,20 @@ runs:
         SUPABASE_ACCESS_TOKEN: ${{ inputs.access-token }}
         SUPABASE_PROJECT_ID: ${{ inputs.project-id }}
         SUPABASE_DB_PASSWORD: ${{ inputs.db-password }}
+        WORKDIR: ${{ inputs.workdir }}
       run: |
-        if ! supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD" > link.log 2>&1; then
+        if ! supabase link --workdir "$WORKDIR" --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD" > link.log 2>&1; then
           cat link.log
           # GitHub masks secret values in this output, so the error can be shown as an annotation.
           echo "::error title=supabase link failed::$(tail -n 4 link.log | tr '\n' ' ')"
           exit 1
         fi
-        supabase migration list --linked
-        supabase db push --linked --dry-run --password "$SUPABASE_DB_PASSWORD"
-        supabase db push --linked --password "$SUPABASE_DB_PASSWORD"
+        supabase migration list --workdir "$WORKDIR" --linked
+        supabase db push --workdir "$WORKDIR" --linked --dry-run --password "$SUPABASE_DB_PASSWORD"
+        supabase db push --workdir "$WORKDIR" --linked --password "$SUPABASE_DB_PASSWORD"
         {
           echo "### Migrations on $TARGET"
           echo '```'
-          supabase migration list --linked
+          supabase migration list --workdir "$WORKDIR" --linked
           echo '```'
         } >> "$GITHUB_STEP_SUMMARY"

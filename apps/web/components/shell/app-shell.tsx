@@ -15,22 +15,39 @@ export type ShellViewer = {
   workspaceName: string;
   mfa: "verified" | "enrolled" | "off";
   canReadAudit: boolean;
+  /** Shown the Business area; the page itself still asks for MFA. */
+  canReadBusiness: boolean;
 };
 
 type NavItem = { href: string; label: string } | { label: string; sprint: number };
+type NavGroup = { title: string; items: NavItem[] };
 
-function navItems(canReadAudit: boolean): NavItem[] {
+/** Business is the Nexus AI Hub side (ADR 0015); Engineering is the agent cockpit. */
+function navGroups(viewer: ShellViewer): NavGroup[] {
   return [
-    { href: "/", label: "Cockpit" },
-    { href: "/projects", label: "Projects" },
-    { label: "Repositories", sprint: 3 },
-    { label: "Agents", sprint: 6 },
-    { label: "Tests", sprint: 7 },
-    { label: "Deployments", sprint: 8 },
-    { label: "Client rooms", sprint: 9 },
-    { label: "Marketing", sprint: 11 },
-    ...(canReadAudit ? [{ href: "/audit", label: "Audit log" }] : []),
-    { href: "/settings", label: "Settings" },
+    ...(viewer.canReadBusiness
+      ? [{ title: "Business", items: [{ href: "/owner", label: "Owner dashboard" }] }]
+      : []),
+    {
+      title: "Engineering",
+      items: [
+        { href: "/", label: "Cockpit" },
+        { href: "/projects", label: "Projects" },
+        { label: "Repositories", sprint: 3 },
+        { label: "Agents", sprint: 6 },
+        { label: "Tests", sprint: 7 },
+        { label: "Deployments", sprint: 8 },
+        { label: "Client rooms", sprint: 9 },
+        { label: "Marketing", sprint: 11 },
+      ],
+    },
+    {
+      title: "Account",
+      items: [
+        ...(viewer.canReadAudit ? [{ href: "/audit", label: "Audit log" }] : []),
+        { href: "/settings", label: "Settings" },
+      ],
+    },
   ];
 }
 
@@ -107,34 +124,44 @@ export function AppShell({ viewer, children }: { viewer: ShellViewer; children: 
           collapsedSize="0"
         >
           <nav aria-label="Primary" className="h-full overflow-y-auto bg-nx-surface py-2">
-            <ul>
-              {navItems(viewer.canReadAudit).map((item) =>
-                "href" in item ? (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      aria-current={isActive(pathname, item.href) ? "page" : undefined}
-                      className={`block px-4 py-1.5 text-sm ${
-                        isActive(pathname, item.href)
-                          ? "bg-nx-raised text-nx-text"
-                          : "text-nx-muted hover:text-nx-text"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ) : (
-                  // Not built yet: plain text (not a link), labelled with the sprint that delivers it.
-                  <li
-                    key={item.label}
-                    className="flex justify-between px-4 py-1.5 text-sm text-nx-muted"
-                  >
-                    {item.label}
-                    <span className="text-xs italic">Sprint {item.sprint}</span>
-                  </li>
-                ),
-              )}
-            </ul>
+            {navGroups(viewer).map((group) => (
+              <div key={group.title} className="mb-3">
+                <p
+                  id={`nav-${group.title.toLowerCase()}`}
+                  className="px-4 pt-1 pb-1 text-[11px] font-semibold tracking-wider text-nx-muted uppercase"
+                >
+                  {group.title}
+                </p>
+                <ul aria-labelledby={`nav-${group.title.toLowerCase()}`}>
+                  {group.items.map((item) =>
+                    "href" in item ? (
+                      <li key={item.label}>
+                        <Link
+                          href={item.href}
+                          aria-current={isActive(pathname, item.href) ? "page" : undefined}
+                          className={`block px-4 py-1.5 text-sm ${
+                            isActive(pathname, item.href)
+                              ? "bg-nx-raised text-nx-text"
+                              : "text-nx-muted hover:text-nx-text"
+                          }`}
+                        >
+                          {item.label}
+                        </Link>
+                      </li>
+                    ) : (
+                      // Not built yet: plain text (not a link), labelled with the sprint that delivers it.
+                      <li
+                        key={item.label}
+                        className="flex justify-between px-4 py-1.5 text-sm text-nx-muted"
+                      >
+                        {item.label}
+                        <span className="text-xs italic">Sprint {item.sprint}</span>
+                      </li>
+                    ),
+                  )}
+                </ul>
+              </div>
+            ))}
           </nav>
         </Panel>
         <Separator

@@ -1,4 +1,4 @@
-import { can } from "@nexus/auth";
+import { authorize, can } from "@nexus/auth";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/shell/app-shell";
 import { requireViewer } from "@/lib/auth/session";
@@ -24,6 +24,9 @@ export default async function CockpitLayout({ children }: { children: ReactNode 
     );
   }
 
+  // The owner sees the Business area before verifying MFA; the page asks for it.
+  const business = authorize({ role: viewer.role, aal: viewer.aal }, "business:read");
+
   return (
     <AppShell
       viewer={{
@@ -32,6 +35,7 @@ export default async function CockpitLayout({ children }: { children: ReactNode 
         workspaceName: viewer.workspaceName,
         mfa: viewer.aal === "aal2" ? "verified" : viewer.hasMfa ? "enrolled" : "off",
         canReadAudit: can({ role: viewer.role, aal: viewer.aal }, "audit:read"),
+        canReadBusiness: business.allowed || business.reason === "mfa_required",
       }}
     >
       {children}

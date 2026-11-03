@@ -16,6 +16,8 @@ export const PERMISSIONS = [
   "settings:update",
   "profile:update",
   "session:revoke_all",
+  /** The Owner Dashboard: Nexus AI Hub customers, revenue and provider bills (ADR 0015). */
+  "business:read",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -34,6 +36,8 @@ export const RISK_PERMISSIONS: ReadonlySet<Permission> = new Set([
   "task:approve",
   "member:manage",
   "session:revoke_all",
+  // Customer personal data and company finances: the Hub plan requires two-step sign-in for them.
+  "business:read",
 ]);
 
 export type AssuranceLevel = "aal1" | "aal2";

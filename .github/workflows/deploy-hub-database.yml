@@ -1,0 +1,86 @@
+name: Deploy Hub database
+
+# Nexus AI Hub's database (customer zone, ADR 0015): its own Supabase project, separate from Nexus
+# Cloud's. New migrations in apps/hub-api/supabase are first proven on a fresh PostgreSQL (the
+# money-path and lockdown tests), then applied to hub-staging, then hub-production. Each deploy job
+# reads only its own GitHub environment's secrets. Both are skipped with a notice until the Hub's
+# Supabase projects exist (docs/runbooks/hub-database.md).
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/hub-api/supabase/**
+      - .github/workflows/deploy-hub-database.yml
+      - .github/actions/supabase-deploy/**
+  workflow_dispatch:
+
+# Never run two schema deployments at once, and never cancel one halfway.
+concurrency:
+  group: deploy-hub-database
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Test Hub migrations on a fresh database
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/nexus_hub_test
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @nexus/hub-api test:db
+
+  staging:
+    name: Apply Hub migrations (staging)
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: hub-staging
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: ./.github/actions/supabase-deploy
+        with:
+          target: hub-staging
+          required: "false"
+          workdir: apps/hub-api
+          runbook: docs/runbooks/hub-database.md
+          access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          project-id: ${{ secrets.SUPABASE_PROJECT_ID }}
+          db-password: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+  production:
+    name: Apply Hub migrations (production)
+    needs: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: hub-production
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: ./.github/actions/supabase-deploy
+        with:
+          target: hub-production
+          # Optional until the Hub's production project exists; make it "true" at Hub launch.
+          required: "false"
+          workdir: apps/hub-api
+          runbook: docs/runbooks/hub-database.md
+          access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          project-id: ${{ secrets.SUPABASE_PROJECT_ID }}
+          db-password: ${{ secrets.SUPABASE_DB_PASSWORD }}

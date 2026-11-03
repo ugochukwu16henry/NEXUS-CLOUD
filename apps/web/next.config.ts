@@ -2,7 +2,7 @@ import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@nexus/core", "@nexus/config", "@nexus/observability"],
+  transpilePackages: ["@nexus/core", "@nexus/config", "@nexus/money", "@nexus/observability"],
   poweredByHeader: false,
   // Baseline headers; the full CSP lands in Sprint 1 with auth (threat model T01/T04).
   async headers() {

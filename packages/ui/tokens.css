@@ -1,6 +1,14 @@
 /*
- * Nexus Cloud design tokens (blueprint section 3): near-black, charcoal and deep navy surfaces
- * with teal / electric-blue accents. Contrast pairs used for text meet WCAG AA (>= 4.5:1).
+ * Nexus design tokens: one family, two themes (ADR 0015).
+ *
+ * - Console (default): Nexus Cloud, the staff app. Near-black, charcoal and deep navy surfaces with
+ *   teal / electric-blue accents (blueprint section 3).
+ * - Hub (`data-theme="hub"`): Nexus AI Hub, the public product. "Ink & Cobalt": calm, light first,
+ *   one cobalt accent, no gradients; `data-theme="hub-dark"` is its dark mode.
+ *
+ * Both themes set the same token names, so a component styled with `nx-*` works in either. Every
+ * text/surface pair meets WCAG AA (>= 4.5:1); packages/ui/tokens.test.ts checks it. Both use Geist
+ * for reading and Geist Mono for every amount, price and code block.
  */
 @theme {
   --color-nx-bg: #070b14;
@@ -15,5 +23,41 @@
   --color-nx-ok: #4ade80;
   --color-nx-warn: #fbbf24;
   --color-nx-danger: #f87171;
-  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    var(--font-geist-mono), "JetBrains Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+}
+
+/* Ink & Cobalt (Nexus AI Hub, light). Cobalt for actions, green only for money coming in. */
+[data-theme="hub"] {
+  color-scheme: light;
+  --color-nx-bg: #f6f6f3;
+  --color-nx-surface: #ffffff;
+  --color-nx-panel: #fbfbf9;
+  --color-nx-raised: #eeeee9;
+  --color-nx-border: #e4e4de;
+  --color-nx-text: #0e1220;
+  --color-nx-muted: #555b6e;
+  --color-nx-teal: #2f4bff;
+  --color-nx-blue: #2f4bff;
+  --color-nx-ok: #0b7a53;
+  --color-nx-warn: #b4400a;
+  --color-nx-danger: #b4400a;
+}
+
+/* Ink & Cobalt, dark mode: cobalt lifts so it stays readable on ink. */
+[data-theme="hub-dark"] {
+  color-scheme: dark;
+  --color-nx-bg: #0b0f1a;
+  --color-nx-surface: #131a2e;
+  --color-nx-panel: #172036;
+  --color-nx-raised: #1c2640;
+  --color-nx-border: #2a3552;
+  --color-nx-text: #e8ecf7;
+  --color-nx-muted: #a3abc2;
+  --color-nx-teal: #8ea0ff;
+  --color-nx-blue: #8ea0ff;
+  --color-nx-ok: #4cc79a;
+  --color-nx-warn: #ffb020;
+  --color-nx-danger: #ff8a65;
 }

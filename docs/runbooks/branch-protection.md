@@ -12,6 +12,7 @@ The Sprint 0 exit criterion is that **CI blocks on failing tests and secrets**. 
    - **Require status checks to pass**, with _Require branches to be up to date_ on, adding these checks (they appear once each has run on a pull request):
      - `Static checks, unit tests, build`
      - `Migrations and RLS tests`
+     - `Hub API database tests`
      - `E2E and accessibility`
      - `Secret scan (gitleaks)`
      - `Dependency scan (OSV-Scanner)`

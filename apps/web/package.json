@@ -16,6 +16,7 @@
     "@nexus/config": "workspace:*",
     "@nexus/core": "workspace:*",
     "@nexus/db": "workspace:*",
+    "@nexus/money": "workspace:*",
     "@nexus/observability": "workspace:*",
     "@nexus/ui": "workspace:*",
     "@sentry/nextjs": "^11.9.0",
