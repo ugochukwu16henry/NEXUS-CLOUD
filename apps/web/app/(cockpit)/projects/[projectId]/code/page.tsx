@@ -6,6 +6,7 @@ import { AgentPanel } from "@/components/code/agent-panel";
 import { CodeEditor } from "@/components/code/code-editor";
 import { DiffView } from "@/components/code/diff-view";
 import { Explorer, type ExplorerFile } from "@/components/code/explorer";
+import { LocalFolderPanel } from "@/components/code/local-folder-panel";
 import { TerminalPanel } from "@/components/code/terminal-panel";
 import { UploadPanel } from "@/components/code/upload-panel";
 import { ActionForm } from "@/components/ui/action-form";
@@ -202,7 +203,9 @@ export default async function CodePage({
   const branchMoved = changeset && branchHead && branchHead !== changeset.base_sha;
 
   return (
-    <main id="main" className="flex h-[calc(100vh-8.5rem)] min-h-[32rem] flex-col">
+    // Laptop: a fixed-height workspace with panes side by side. Phone: everything stacks and the
+    // page scrolls.
+    <main id="main" className="flex flex-col md:h-[calc(100vh-8.5rem)] md:min-h-[32rem]">
       <h1 className="sr-only">Code</h1>
       {/* ---------------------------------------------------------------- toolbar */}
       <div className="flex flex-wrap items-center gap-3 border-b border-nx-border px-4 py-2 text-sm">
@@ -241,6 +244,13 @@ export default async function CodePage({
             <input type="hidden" name="taskId" value={task.id} />
           </ActionForm>
         )}
+        <a
+          href={`/projects/${project.id}/code/export${task ? `?task=${task.id}` : ""}`}
+          download
+          className="text-nx-blue underline"
+        >
+          Download .zip
+        </a>
         {lockedByOther && (
           <span role="status" className="text-nx-warn">
             Someone else is editing this task; read-only until they finish.
@@ -267,11 +277,11 @@ export default async function CodePage({
         </div>
       )}
 
-      <div className="grid min-h-0 flex-1 grid-cols-[16rem_1fr]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[16rem_1fr]">
         {/* ---------------------------------------------------------------- explorer */}
         <aside
           aria-label="Files"
-          className="flex min-h-0 flex-col border-r border-nx-border bg-nx-surface"
+          className="flex max-h-[60vh] min-h-0 flex-col overflow-y-auto border-b border-nx-border bg-nx-surface md:max-h-none md:border-r md:border-b-0"
         >
           {changeset && !lockedByOther && (
             <UploadPanel
@@ -282,6 +292,13 @@ export default async function CodePage({
                 maxUploadMb: limits.maxUploadMb,
                 maxFiles: limits.maxFiles,
               }}
+            />
+          )}
+          {changeset && !lockedByOther && (
+            <LocalFolderPanel
+              projectId={project.id}
+              taskId={task!.id}
+              skipFolders={limits.skipFolders}
             />
           )}
           <div className="min-h-0 flex-1">

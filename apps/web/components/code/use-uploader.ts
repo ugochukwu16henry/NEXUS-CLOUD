@@ -27,8 +27,14 @@ export function useUploader(projectId: string, taskId: string, target: "worktree
   const router = useRouter();
   const [status, setStatus] = useState<UploadStatus>({ phase: "idle" });
 
-  async function upload(picked: PickedFile[]) {
-    if (picked.length === 0) return;
+  /** `earlier` carries notes from before the upload (files a zip left out). */
+  async function upload(picked: PickedFile[], earlier: string[] = []) {
+    if (picked.length === 0) {
+      if (earlier.length > 0) {
+        setStatus({ phase: "error", message: "Nothing to upload.", notes: earlier });
+      }
+      return;
+    }
     setStatus({ phase: "preparing", total: picked.length });
 
     // Same naming rules as the server, so each signed URL can be matched to its file.
@@ -51,6 +57,7 @@ export function useUploader(projectId: string, taskId: string, target: "worktree
     const skipped = parseList(prepared.data?.skipped);
     const rejected = parseList(prepared.data?.rejected);
     const notes = [
+      ...earlier,
       ...skipped.map((item) => `Skipped ${item.path} (${item.reason})`),
       ...rejected.map((item) => `Not uploaded: ${item.path} (${item.reason})`),
     ];
