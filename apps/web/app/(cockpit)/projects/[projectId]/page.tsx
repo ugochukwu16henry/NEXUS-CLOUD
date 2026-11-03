@@ -6,6 +6,7 @@ import {
   getProjectTasks,
   getRequirements,
 } from "@/lib/projects/queries";
+import { formatMicros, projectSpentMicros } from "@/lib/models/queries";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -25,11 +26,12 @@ export default async function ProjectOverviewPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const [project, { tasks }, requirements, milestones] = await Promise.all([
+  const [project, { tasks }, requirements, milestones, spent] = await Promise.all([
     getProject(projectId),
     getProjectTasks(projectId),
     getRequirements(projectId),
     getMilestones(projectId),
+    projectSpentMicros(projectId),
   ]);
 
   const counts = Object.fromEntries(
@@ -111,7 +113,12 @@ export default async function ProjectOverviewPage({
               />
             </div>
           )}
-          <p className="text-xs text-nx-muted">Actual model spend is tracked from Sprint 5.</p>
+          <p className="text-xs text-nx-muted">
+            Model spend this month: {formatMicros(spent)} (Assistant and agents).{" "}
+            <Link href={`/projects/${project.id}/settings`} className="text-nx-blue underline">
+              Budget settings
+            </Link>
+          </p>
         </section>
 
         <section aria-labelledby="requirements-heading" className="space-y-2">

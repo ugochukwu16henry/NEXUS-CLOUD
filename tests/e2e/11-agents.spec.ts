@@ -122,6 +122,20 @@ test.describe("agent runs", () => {
     );
   });
 
+  test("the Agents page lists the run", async ({ page }) => {
+    await page.goto("/");
+    await page
+      .getByRole("navigation", { name: "Primary" })
+      .getByRole("link", { name: "Agents" })
+      .click();
+    await expect(page.getByRole("heading", { level: 1, name: "Agents" })).toBeVisible();
+    const runs = page.getByRole("list", { name: "Agent runs" });
+    await expect(runs).toContainText("Farewell helper");
+    await expect(runs).toContainText("coder · succeeded");
+    await expect(page.getByText("Nothing is waiting for approval.")).toBeVisible();
+    await expectAccessible(page);
+  });
+
   test("the terminal opens on the task's files", async ({ page }) => {
     secret = await ensureMfa(page);
     await page.goto(`${projectUrl}/code?task=${taskId}`);

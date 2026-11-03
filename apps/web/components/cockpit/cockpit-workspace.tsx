@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 import { Group, Panel, Separator, usePanelRef } from "react-resizable-panels";
 import { useShortcuts, type Shortcut } from "@/components/shell/use-shortcuts";
@@ -187,7 +188,13 @@ export function CockpitWorkspace() {
                   </li>
                 ))}
               </ol>
-              <p className="text-xs text-nx-muted">Approvals are wired up in Sprint 6.</p>
+              <p className="text-xs text-nx-muted">
+                Sample run. Real runs and approvals are on the{" "}
+                <Link href="/agents" className="text-nx-blue underline">
+                  Agents
+                </Link>{" "}
+                page.
+              </p>
             </div>
           </aside>
         </Panel>

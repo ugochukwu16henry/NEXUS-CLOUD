@@ -39,7 +39,8 @@ export default async function AssistantPage({
         <h1 className="text-lg font-semibold">Assistant</h1>
         <p className="text-sm text-nx-muted">
           One prompt, through the model gateway. The budget is checked before anything is sent, and
-          the cost is written to the usage ledger. Agents that edit the project arrive in Sprint 6.
+          the cost is written to the usage ledger. To have an agent change the code, use the Agent
+          panel on a task.
         </p>
         <p className="text-sm">
           Project spend this month: {formatMicros(spent)} of {formatUsd(limit)}

@@ -34,7 +34,7 @@ function navGroups(viewer: ShellViewer): NavGroup[] {
         { href: "/", label: "Cockpit" },
         { href: "/projects", label: "Projects" },
         { href: "/repositories", label: "Repositories" },
-        { label: "Agents", sprint: 6 },
+        { href: "/agents", label: "Agents" },
         { label: "Tests", sprint: 7 },
         { label: "Deployments", sprint: 8 },
         { label: "Client rooms", sprint: 9 },

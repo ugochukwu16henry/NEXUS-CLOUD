@@ -35,3 +35,31 @@ export async function listPendingCommands(runId: string) {
     .order("created_at", { ascending: true });
   return data ?? [];
 }
+
+/** Recent runs across every project the owner can see (RLS), newest first, for the Agents page. */
+export async function listRecentRuns(limit = 50) {
+  const supabase = await createSupabaseServerClient();
+  const [{ data: runs }, { data: projects }, { data: waiting }] = await Promise.all([
+    supabase
+      .from("agent_runs")
+      .select(
+        "id, project_id, task_id, kind, status, purpose, spent_usd_micros, budget_usd_micros, iteration, max_iterations, error, created_at, finished_at, tasks(ref, title)",
+      )
+      .order("created_at", { ascending: false })
+      .limit(limit),
+    supabase.from("projects").select("id, name"),
+    supabase
+      .from("command_approvals")
+      .select("id, run_id, command, created_at")
+      .eq("decision", "pending")
+      .order("created_at", { ascending: true }),
+  ]);
+  const names = new Map((projects ?? []).map((project) => [project.id, project.name]));
+  return {
+    runs: (runs ?? []).map((run) => ({
+      ...run,
+      projectName: names.get(run.project_id) ?? "Project",
+    })),
+    waiting: waiting ?? [],
+  };
+}
