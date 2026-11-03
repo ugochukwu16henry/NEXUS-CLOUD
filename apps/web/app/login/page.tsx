@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
+import { Logo } from "@/components/brand/logo";
 import { getViewer } from "@/lib/auth/session";
 import { isGitHubSignInEnabled } from "@/lib/env";
 
@@ -28,8 +29,8 @@ export default async function LoginPage({
   return (
     <main id="main" className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-sm rounded-lg border border-nx-border bg-nx-surface p-6">
-        <p className="text-sm font-semibold tracking-wide text-nx-teal">NEXUS CLOUD</p>
-        <h1 className="mt-2 text-xl font-semibold">Sign in</h1>
+        <Logo size={40} className="text-xl" />
+        <h1 className="mt-6 text-xl font-semibold">Sign in</h1>
         <p className="mt-1 text-sm text-nx-muted">Access is by invitation only.</p>
         {message && (
           <p

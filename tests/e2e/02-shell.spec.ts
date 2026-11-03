@@ -16,7 +16,7 @@ test.describe("app shell", () => {
   });
 
   test("shows the cockpit panels and the owner's workspace", async ({ page }) => {
-    await expect(page.getByText("Nexus Cloud", { exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Nexus Cloud", exact: true })).toBeVisible();
     await expect(page.getByRole("main")).toBeVisible();
     await expect(page.getByRole("region", { name: "Console" })).toBeVisible();
     await expect(page.getByRole("complementary", { name: "AI command panel" })).toBeVisible();

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useMemo, useRef, type ReactNode } from "react";
 import { Group, Panel, Separator, usePanelRef } from "react-resizable-panels";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { Logo } from "@/components/brand/logo";
 import { Announcer } from "@/components/ui/announcer";
 import { useShortcuts, type Shortcut } from "./use-shortcuts";
 
@@ -74,8 +75,8 @@ export function AppShell({ viewer, children }: { viewer: ShellViewer; children: 
   return (
     <div className="flex h-screen flex-col">
       <header className="flex items-center gap-4 border-b border-nx-border bg-nx-surface px-4 py-2">
-        <Link href="/" className="font-semibold tracking-wide text-nx-teal">
-          NEXUS CLOUD
+        <Link href="/" className="rounded-md">
+          <Logo size={26} className="text-[15px]" />
         </Link>
         <span className="text-sm text-nx-muted">{viewer.workspaceName}</span>
         <span className={`ml-auto rounded border px-2 py-0.5 text-xs ${badge.className}`}>
