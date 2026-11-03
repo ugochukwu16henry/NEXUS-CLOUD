@@ -23,6 +23,7 @@ const EXPECTED: Record<Role, Record<Permission, boolean>> = {
     "profile:update": true,
     "session:revoke_all": true,
     "business:read": true,
+    "integration:manage": true,
   },
   client: {
     "workspace:read": true,
@@ -36,6 +37,7 @@ const EXPECTED: Record<Role, Record<Permission, boolean>> = {
     "profile:update": true,
     "session:revoke_all": true,
     "business:read": false,
+    "integration:manage": false,
   },
   viewer: {
     "workspace:read": true,
@@ -49,6 +51,7 @@ const EXPECTED: Record<Role, Record<Permission, boolean>> = {
     "profile:update": true,
     "session:revoke_all": true,
     "business:read": false,
+    "integration:manage": false,
   },
 };
 

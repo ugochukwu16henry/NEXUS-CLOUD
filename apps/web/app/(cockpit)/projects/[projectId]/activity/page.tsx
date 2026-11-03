@@ -29,7 +29,29 @@ const ACTION_LABELS: Record<string, string> = {
   "task.move": "moved a task",
   "task.dependency_add": "added a dependency",
   "task.dependency_remove": "removed a dependency",
+  "repository.import": "imported the repository",
+  "repository.sync": "synced the repository",
+  "github.push": "pushed to GitHub",
+  "github.pull_request": "updated a pull request",
+  "github.branch_delete": "deleted a branch",
 };
+
+/** Extra detail for GitHub events: which branch, how many commits, which tasks. */
+function gitHubDetail(action: string, metadata: Record<string, unknown>): string | null {
+  const tasks =
+    Array.isArray(metadata.tasks) && metadata.tasks.length > 0
+      ? ` · ${(metadata.tasks as number[]).map((ref) => `NX-${ref}`).join(", ")}`
+      : "";
+  if (action === "github.push") {
+    const count = Number(metadata.commits ?? 0);
+    return `${count} ${count === 1 ? "commit" : "commits"} to ${String(metadata.branch)}${tasks}`;
+  }
+  if (action === "github.pull_request") {
+    return `#${String(metadata.number)} ${String(metadata.state)}: ${String(metadata.title)}${tasks}`;
+  }
+  if (action === "github.branch_delete") return String(metadata.branch);
+  return null;
+}
 
 export default async function ActivityPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
@@ -61,7 +83,17 @@ export default async function ActivityPage({ params }: { params: Promise<{ proje
                   {dateFormat.format(new Date(event.created_at))} UTC
                 </time>
                 <span>
-                  <strong>{event.actor}</strong> {ACTION_LABELS[event.action] ?? event.action}
+                  {/* GitHub events have no Nexus user behind them; show where they came from. */}
+                  <strong>
+                    {event.action.startsWith("github.") ? "GitHub" : event.actor}
+                  </strong>{" "}
+                  {ACTION_LABELS[event.action] ?? event.action}
+                  {gitHubDetail(event.action, event.metadata as Record<string, unknown>) && (
+                    <span className="text-nx-muted">
+                      {" "}
+                      ({gitHubDetail(event.action, event.metadata as Record<string, unknown>)})
+                    </span>
+                  )}
                   {metadata.from && metadata.to && (
                     <span className="text-nx-muted">
                       {" "}

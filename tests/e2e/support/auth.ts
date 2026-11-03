@@ -85,6 +85,9 @@ export function saveTotpSecret(secret: string) {
  * example when a spec file runs on its own).
  */
 export async function ensureMfa(page: Page): Promise<string> {
+  // Enrolled earlier in this run (global setup clears the file). Don't judge from the page: a
+  // restored session saved before enrolment still carries a token that says "no authenticator".
+  if (existsSync(SECRET_FILE)) return readFileSync(SECRET_FILE, "utf8").trim();
   await page.goto("/settings/security");
   const setUp = page.getByRole("button", { name: "Set up an authenticator app" });
   if (!(await setUp.isVisible())) {

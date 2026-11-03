@@ -18,6 +18,21 @@ export const serverEnvSchema = publicEnvSchema.extend({
   NEXUS_GLOBAL_MONTHLY_BUDGET_USD: z.coerce.number().positive().default(20),
   /** Worker error reporting (the web app uses NEXT_PUBLIC_SENTRY_DSN). */
   SENTRY_DSN: z.url().optional(),
+  /** GitHub App (Sprint 3, docs/runbooks/github-app.md). The integration is off until all are set. */
+  GITHUB_APP_ID: z.string().regex(/^\d+$/).optional(),
+  GITHUB_APP_SLUG: z
+    .string()
+    .regex(/^[a-z0-9-]+$/)
+    .optional(),
+  GITHUB_APP_CLIENT_ID: z.string().optional(),
+  GITHUB_APP_CLIENT_SECRET: z.string().optional(),
+  /** PEM private key; may be stored on one line with literal 
+. */
+  GITHUB_APP_PRIVATE_KEY: z.string().optional(),
+  GITHUB_WEBHOOK_SECRET: z.string().min(20).optional(),
+  /** Overridden only by tests (a local fake GitHub). */
+  GITHUB_API_URL: z.url().default("https://api.github.com"),
+  GITHUB_WEB_URL: z.url().default("https://github.com"),
   XAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),

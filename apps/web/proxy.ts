@@ -3,7 +3,13 @@ import { createLogger } from "@nexus/observability";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE_OPTIONS } from "@/lib/supabase/cookies";
-import { buildCsp, createNonce, isCrossSiteMutation, isPublicPath } from "@/lib/security-headers";
+import {
+  buildCsp,
+  createNonce,
+  isCrossSiteMutation,
+  isPublicPath,
+  isSignedWebhookPath,
+} from "@/lib/security-headers";
 
 const CORRELATION_HEADER = "x-correlation-id";
 const logger = createLogger({ service: "web-proxy" });
@@ -17,6 +23,7 @@ export async function proxy(request: NextRequest) {
 
   if (
     pathname.startsWith("/api/") &&
+    !isSignedWebhookPath(pathname) &&
     isCrossSiteMutation(request.method, request.headers.get("origin"), request.headers.get("host"))
   ) {
     return new NextResponse("Cross-site request blocked", { status: 403 });

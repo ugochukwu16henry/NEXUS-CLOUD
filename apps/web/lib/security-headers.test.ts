@@ -48,10 +48,16 @@ describe("isCrossSiteMutation", () => {
 });
 
 describe("isPublicPath", () => {
-  it.each(["/login", "/auth/callback"])("%s is public", (path) =>
+  it.each(["/login", "/auth/callback", "/api/webhooks/github"])("%s is public", (path) =>
     expect(isPublicPath(path)).toBe(true),
   );
-  it.each(["/", "/settings", "/audit", "/mfa", "/loginx"])("%s needs a session", (path) =>
-    expect(isPublicPath(path)).toBe(false),
-  );
+  it.each([
+    "/",
+    "/settings",
+    "/audit",
+    "/mfa",
+    "/loginx",
+    "/api/other",
+    "/integrations/github/setup",
+  ])("%s needs a session", (path) => expect(isPublicPath(path)).toBe(false));
 });

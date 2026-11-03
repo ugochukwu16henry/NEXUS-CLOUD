@@ -1,0 +1,20 @@
+{
+  "name": "@nexus/integrations",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:int": "vitest run --mode int"
+  },
+  "dependencies": {
+    "@nexus/audit": "workspace:*",
+    "@nexus/db": "workspace:*",
+    "@supabase/supabase-js": "^2.118.0",
+    "zod": "^4.6.7"
+  }
+}

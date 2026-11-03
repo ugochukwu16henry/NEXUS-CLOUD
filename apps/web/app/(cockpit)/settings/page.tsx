@@ -43,6 +43,16 @@ export default async function SettingsPage() {
         </Link>
       </section>
 
+      <section aria-labelledby="integrations-heading" className="space-y-2">
+        <h2 id="integrations-heading" className="text-lg font-semibold">
+          Integrations
+        </h2>
+        <p className="text-sm text-nx-muted">GitHub repositories, webhooks and their health.</p>
+        <Link href="/settings/integrations" className="text-sm text-nx-blue underline">
+          Manage integrations
+        </Link>
+      </section>
+
       <section aria-labelledby="sessions-heading" className="space-y-4">
         <h2 id="sessions-heading" className="text-lg font-semibold">
           Sessions

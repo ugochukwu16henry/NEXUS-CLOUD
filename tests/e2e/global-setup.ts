@@ -6,7 +6,7 @@ import { clearMailbox } from "./support/mailbox";
 
 /**
  * Starts every run from a known state: no owner account (so the first sign-in bootstraps it, with
- * no MFA enrolled) and an empty mailbox. Runs only against local Supabase.
+ * no MFA enrolled), GitHub disconnected and an empty mailbox. Runs only against local Supabase.
  */
 export default async function globalSetup() {
   if (!/^http:\/\/(127\.0\.0\.1|localhost):/.test(testEnv.supabaseUrl)) {
@@ -24,6 +24,13 @@ export default async function globalSetup() {
       const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
       if (deleteError) throw deleteError;
     }
+  }
+  // GitHub integration data from earlier runs (Sprint 3): one installation per workspace and one
+  // repository per GitHub repo, so a rerun must start disconnected. Task links and synced
+  // branches, commits and pull requests go with their repository.
+  for (const table of ["webhook_events", "repositories", "integrations"] as const) {
+    const { error: wipeError } = await admin.from(table).delete().not("id", "is", null);
+    if (wipeError) throw wipeError;
   }
   await clearMailbox();
   // The owner is recreated without MFA, so a secret saved by an earlier run is stale.

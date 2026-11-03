@@ -6,7 +6,7 @@ A personal AI-powered software engineering cloud: one dark cockpit that coordina
 
 This repository also holds **Nexus AI Hub** (formerly Zentrix AI Hub), the public product: pay-as-you-go AI video, images, coding help and study help in Naira. It lives in a separate customer zone with its own database and keys ([ADR 0015](docs/adr/0015-nexus-ai-hub-integration.md)). Both are products of Zentrix Software Solutions.
 
-**Status:** Sprint 2 (project cockpit) and Sprint 2H (harmonization: Nexus AI Hub joins the platform) complete. See the [plan](docs/plan/Nexus_Cloud_Structure_Sprint_and_Test_Plan.pdf).
+**Status:** Sprint 3 (GitHub App, repository import, verified webhook inbox) complete, after Sprint 2H (Nexus AI Hub joins the platform). See the [plan](docs/plan/Nexus_Cloud_Structure_Sprint_and_Test_Plan.pdf).
 
 ## Repository layout
 
@@ -21,6 +21,7 @@ This repository also holds **Nexus AI Hub** (formerly Zentrix AI Hub), the publi
 | `packages/observability` | JSON logger with secret redaction                                                 |
 | `packages/db`            | Database types generated from the migrations                                      |
 | `packages/config`        | Environment schema; keeps server-only variables out of the browser                |
+| `packages/integrations`  | GitHub App client, webhook verification and processing, task links                |
 | `packages/money`         | Kobo, exchange rates, VAT and margins, shared by both products                    |
 | `packages/model-gateway` | One interface for every AI provider; one gateway per zone                         |
 | `packages/ui`            | Design tokens: dark Console theme and Ink & Cobalt Hub theme                      |
@@ -45,14 +46,15 @@ After changing a migration, run `supabase db reset`, then `pnpm db:types`.
 
 ## Checks
 
-| Command                                              | Gate                                         |
-| ---------------------------------------------------- | -------------------------------------------- |
-| `pnpm lint` · `pnpm typecheck` · `pnpm format:check` | G1 static                                    |
-| `pnpm test`                                          | G2 unit tests                                |
-| `pnpm test:db`                                       | G2 RLS and audit-log policy tests (pgTAP)    |
-| `pnpm --filter @nexus/hub-api test:db`               | G2 Hub money path and schema lockdown        |
-| `pnpm build && pnpm check:bundle-secrets`            | No server-only secrets in the browser bundle |
-| `pnpm build && pnpm test:e2e`                        | G4 E2E, accessibility and security headers   |
+| Command                                              | Gate                                          |
+| ---------------------------------------------------- | --------------------------------------------- |
+| `pnpm lint` · `pnpm typecheck` · `pnpm format:check` | G1 static                                     |
+| `pnpm test`                                          | G2 unit tests                                 |
+| `pnpm test:db`                                       | G2 RLS and audit-log policy tests (pgTAP)     |
+| `pnpm --filter @nexus/hub-api test:db`               | G2 Hub money path and schema lockdown         |
+| `pnpm --filter @nexus/integrations test:int`         | G2 GitHub webhook processing (local Supabase) |
+| `pnpm build && pnpm check:bundle-secrets`            | No server-only secrets in the browser bundle  |
+| `pnpm build && pnpm test:e2e`                        | G4 E2E, accessibility and security headers    |
 
 E2E tests need local Supabase running. They delete and recreate the local owner account, and they refuse to run against a non-local Supabase.
 

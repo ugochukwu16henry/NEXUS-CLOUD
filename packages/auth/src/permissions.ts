@@ -18,6 +18,8 @@ export const PERMISSIONS = [
   "session:revoke_all",
   /** The Owner Dashboard: Nexus AI Hub customers, revenue and provider bills (ADR 0015). */
   "business:read",
+  /** Install or change the GitHub App, retry webhook deliveries (Sprint 3). */
+  "integration:manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -38,6 +40,8 @@ export const RISK_PERMISSIONS: ReadonlySet<Permission> = new Set([
   "session:revoke_all",
   // Customer personal data and company finances: the Hub plan requires two-step sign-in for them.
   "business:read",
+  // Connecting GitHub grants Nexus write access to repositories.
+  "integration:manage",
 ]);
 
 export type AssuranceLevel = "aal1" | "aal2";

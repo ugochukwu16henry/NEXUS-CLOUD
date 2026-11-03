@@ -72,6 +72,68 @@ export type Database = {
           },
         ]
       }
+      integrations: {
+        Row: {
+          account_login: string
+          account_type: string
+          created_at: string
+          id: string
+          installation_id: number
+          installed_by: string | null
+          last_error: string | null
+          last_error_at: string | null
+          last_ok_at: string | null
+          permissions: Json
+          provider: string
+          repository_selection: string
+          status: Database["public"]["Enums"]["integration_status"]
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          account_login: string
+          account_type: string
+          created_at?: string
+          id?: string
+          installation_id: number
+          installed_by?: string | null
+          last_error?: string | null
+          last_error_at?: string | null
+          last_ok_at?: string | null
+          permissions?: Json
+          provider?: string
+          repository_selection: string
+          status?: Database["public"]["Enums"]["integration_status"]
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          account_login?: string
+          account_type?: string
+          created_at?: string
+          id?: string
+          installation_id?: number
+          installed_by?: string | null
+          last_error?: string | null
+          last_error_at?: string | null
+          last_ok_at?: string | null
+          permissions?: Json
+          provider?: string
+          repository_selection?: string
+          status?: Database["public"]["Enums"]["integration_status"]
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memberships: {
         Row: {
           created_at: string
@@ -234,6 +296,180 @@ export type Database = {
           },
         ]
       }
+      repo_branches: {
+        Row: {
+          head_sha: string
+          name: string
+          protected: boolean
+          repository_id: string
+          updated_at: string
+        }
+        Insert: {
+          head_sha: string
+          name: string
+          protected?: boolean
+          repository_id: string
+          updated_at?: string
+        }
+        Update: {
+          head_sha?: string
+          name?: string
+          protected?: boolean
+          repository_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repo_branches_repository_id_fkey"
+            columns: ["repository_id"]
+            isOneToOne: false
+            referencedRelation: "repositories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repo_commits: {
+        Row: {
+          author_name: string | null
+          authored_at: string | null
+          branch: string | null
+          html_url: string | null
+          message: string
+          repository_id: string
+          sha: string
+        }
+        Insert: {
+          author_name?: string | null
+          authored_at?: string | null
+          branch?: string | null
+          html_url?: string | null
+          message: string
+          repository_id: string
+          sha: string
+        }
+        Update: {
+          author_name?: string | null
+          authored_at?: string | null
+          branch?: string | null
+          html_url?: string | null
+          message?: string
+          repository_id?: string
+          sha?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repo_commits_repository_id_fkey"
+            columns: ["repository_id"]
+            isOneToOne: false
+            referencedRelation: "repositories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repo_pull_requests: {
+        Row: {
+          base_ref: string
+          checks: string
+          head_ref: string
+          head_sha: string
+          html_url: string
+          number: number
+          repository_id: string
+          state: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          base_ref: string
+          checks?: string
+          head_ref: string
+          head_sha: string
+          html_url: string
+          number: number
+          repository_id: string
+          state: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          base_ref?: string
+          checks?: string
+          head_ref?: string
+          head_sha?: string
+          html_url?: string
+          number?: number
+          repository_id?: string
+          state?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repo_pull_requests_repository_id_fkey"
+            columns: ["repository_id"]
+            isOneToOne: false
+            referencedRelation: "repositories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repositories: {
+        Row: {
+          default_branch: string
+          full_name: string
+          github_repo_id: number
+          html_url: string
+          id: string
+          imported_at: string
+          imported_by: string | null
+          integration_id: string
+          last_synced_at: string | null
+          private: boolean
+          project_id: string
+        }
+        Insert: {
+          default_branch: string
+          full_name: string
+          github_repo_id: number
+          html_url: string
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          integration_id: string
+          last_synced_at?: string | null
+          private: boolean
+          project_id: string
+        }
+        Update: {
+          default_branch?: string
+          full_name?: string
+          github_repo_id?: number
+          html_url?: string
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          integration_id?: string
+          last_synced_at?: string | null
+          private?: boolean
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repositories_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repositories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       requirement_versions: {
         Row: {
           changed_at: string
@@ -379,6 +615,51 @@ export type Database = {
           },
         ]
       }
+      task_links: {
+        Row: {
+          created_at: string
+          kind: Database["public"]["Enums"]["task_link_kind"]
+          ref: string
+          repository_id: string
+          task_id: string
+          title: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          kind: Database["public"]["Enums"]["task_link_kind"]
+          ref: string
+          repository_id: string
+          task_id: string
+          title?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          kind?: Database["public"]["Enums"]["task_link_kind"]
+          ref?: string
+          repository_id?: string
+          task_id?: string
+          title?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_links_repository_id_fkey"
+            columns: ["repository_id"]
+            isOneToOne: false
+            referencedRelation: "repositories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_links_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           acceptance_criteria: string
@@ -467,6 +748,57 @@ export type Database = {
           },
         ]
       }
+      webhook_events: {
+        Row: {
+          action: string | null
+          attempts: number
+          delivery_id: string
+          event: string
+          id: number
+          installation_id: number | null
+          last_error: string | null
+          locked_at: string | null
+          next_attempt_at: string
+          payload: Json
+          processed_at: string | null
+          provider: string
+          received_at: string
+          status: Database["public"]["Enums"]["webhook_status"]
+        }
+        Insert: {
+          action?: string | null
+          attempts?: number
+          delivery_id: string
+          event: string
+          id?: never
+          installation_id?: number | null
+          last_error?: string | null
+          locked_at?: string | null
+          next_attempt_at?: string
+          payload: Json
+          processed_at?: string | null
+          provider?: string
+          received_at?: string
+          status?: Database["public"]["Enums"]["webhook_status"]
+        }
+        Update: {
+          action?: string | null
+          attempts?: number
+          delivery_id?: string
+          event?: string
+          id?: never
+          installation_id?: number | null
+          last_error?: string | null
+          locked_at?: string | null
+          next_attempt_at?: string
+          payload?: Json
+          processed_at?: string | null
+          provider?: string
+          received_at?: string
+          status?: Database["public"]["Enums"]["webhook_status"]
+        }
+        Relationships: []
+      }
       workspaces: {
         Row: {
           created_at: string
@@ -490,6 +822,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_webhook_events: {
+        Args: { batch_size: number; only_delivery?: string }
+        Returns: {
+          action: string | null
+          attempts: number
+          delivery_id: string
+          event: string
+          id: number
+          installation_id: number | null
+          last_error: string | null
+          locked_at: string | null
+          next_attempt_at: string
+          payload: Json
+          processed_at: string | null
+          provider: string
+          received_at: string
+          status: Database["public"]["Enums"]["webhook_status"]
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "webhook_events"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       my_sessions: {
         Args: never
         Returns: {
@@ -505,10 +862,13 @@ export type Database = {
     }
     Enums: {
       approval_state: "draft" | "approved" | "rejected"
+      integration_status: "active" | "suspended" | "removed"
       membership_role: "owner" | "client" | "viewer"
       milestone_status: "planned" | "in_progress" | "done"
       project_status: "active" | "on_hold" | "completed"
       requirement_priority: "must" | "should" | "could" | "wont"
+      task_link_kind: "branch" | "commit" | "pull_request"
+      webhook_status: "pending" | "processing" | "processed" | "failed" | "dead"
       workflow_state:
         | "backlog"
         | "ready"
@@ -652,10 +1012,13 @@ export const Constants = {
   public: {
     Enums: {
       approval_state: ["draft", "approved", "rejected"],
+      integration_status: ["active", "suspended", "removed"],
       membership_role: ["owner", "client", "viewer"],
       milestone_status: ["planned", "in_progress", "done"],
       project_status: ["active", "on_hold", "completed"],
       requirement_priority: ["must", "should", "could", "wont"],
+      task_link_kind: ["branch", "commit", "pull_request"],
+      webhook_status: ["pending", "processing", "processed", "failed", "dead"],
       workflow_state: [
         "backlog",
         "ready",

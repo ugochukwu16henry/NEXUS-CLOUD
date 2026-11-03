@@ -130,6 +130,9 @@ importers:
       '@nexus/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@nexus/integrations':
+        specifier: workspace:*
+        version: link:../../packages/integrations
       '@nexus/money':
         specifier: workspace:*
         version: link:../../packages/money
@@ -203,12 +206,21 @@ importers:
       '@nexus/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@nexus/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@nexus/integrations':
+        specifier: workspace:*
+        version: link:../../packages/integrations
       '@nexus/observability':
         specifier: workspace:*
         version: link:../../packages/observability
       '@sentry/node':
         specifier: ^11.9.0
         version: 11.9.0(rollup@4.65.0)
+      '@supabase/supabase-js':
+        specifier: ^2.118.0
+        version: 2.118.0(@opentelemetry/api@1.10.0)
     devDependencies:
       '@types/node':
         specifier: ^26.0.0
@@ -233,6 +245,21 @@ importers:
   packages/core: {}
 
   packages/db: {}
+
+  packages/integrations:
+    dependencies:
+      '@nexus/audit':
+        specifier: workspace:*
+        version: link:../audit
+      '@nexus/db':
+        specifier: workspace:*
+        version: link:../db
+      '@supabase/supabase-js':
+        specifier: ^2.118.0
+        version: 2.118.0(@opentelemetry/api@1.10.0)
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/model-gateway: {}
 

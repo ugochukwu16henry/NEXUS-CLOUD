@@ -13,8 +13,11 @@
   "dependencies": {
     "@nexus/config": "workspace:*",
     "@nexus/core": "workspace:*",
+    "@nexus/db": "workspace:*",
+    "@nexus/integrations": "workspace:*",
     "@nexus/observability": "workspace:*",
-    "@sentry/node": "^11.9.0"
+    "@sentry/node": "^11.9.0",
+    "@supabase/supabase-js": "^2.118.0"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",

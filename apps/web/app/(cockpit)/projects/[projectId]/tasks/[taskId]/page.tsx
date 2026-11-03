@@ -6,6 +6,7 @@ import { MoveTaskForm } from "@/components/projects/move-task-form";
 import { TaskFields } from "@/components/projects/task-fields";
 import { ActionForm } from "@/components/ui/action-form";
 import { Badge, Hidden, SelectField, buttonSecondary } from "@/components/ui/fields";
+import { getTaskLinks } from "@/lib/github/repository";
 import { getMilestones, getProjectTasks, getRequirements, getTask } from "@/lib/projects/queries";
 
 export const metadata: Metadata = { title: "Task · Nexus Cloud" };
@@ -16,11 +17,12 @@ export default async function TaskPage({
   params: Promise<{ projectId: string; taskId: string }>;
 }) {
   const { projectId, taskId } = await params;
-  const [task, { tasks, edges }, requirements, milestones] = await Promise.all([
+  const [task, { tasks, edges }, requirements, milestones, links] = await Promise.all([
     getTask(projectId, taskId),
     getProjectTasks(projectId),
     getRequirements(projectId),
     getMilestones(projectId),
+    getTaskLinks(taskId),
   ]);
   const byId = new Map(tasks.map((t) => [t.id, t]));
   const dependsOn = edges
@@ -139,6 +141,51 @@ export default async function TaskPage({
             </ul>
           </section>
         )}
+
+        <section aria-labelledby="github-heading" className="space-y-2">
+          <h2 id="github-heading" className="text-base font-semibold">
+            On GitHub
+          </h2>
+          {links.length === 0 ? (
+            <p className="text-sm text-nx-muted">
+              Nothing linked. Use <span className="font-mono">NX-{task.ref}</span> in a branch name,
+              commit message or pull request title.
+            </p>
+          ) : (
+            <ul className="space-y-1 text-sm" aria-label="Linked GitHub work">
+              {links.map((link) => (
+                <li key={`${link.kind}-${link.ref}`}>
+                  <span className="text-nx-muted">
+                    {link.kind === "branch"
+                      ? "Branch"
+                      : link.kind === "commit"
+                        ? "Commit"
+                        : "Pull request"}
+                  </span>{" "}
+                  {link.url ? (
+                    <a
+                      href={link.url}
+                      rel="noreferrer noopener"
+                      target="_blank"
+                      className="text-nx-blue underline"
+                    >
+                      {link.kind === "commit"
+                        ? link.ref.slice(0, 7)
+                        : link.kind === "pull_request"
+                          ? `#${link.ref}`
+                          : link.ref}
+                    </a>
+                  ) : (
+                    <span className="font-mono">{link.ref}</span>
+                  )}
+                  {link.title && link.kind !== "branch" && (
+                    <span className="block text-xs text-nx-muted">{link.title}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         {task.evidence_links.length > 0 && (
           <section aria-labelledby="evidence-heading" className="space-y-2">

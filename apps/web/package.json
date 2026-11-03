@@ -16,6 +16,7 @@
     "@nexus/config": "workspace:*",
     "@nexus/core": "workspace:*",
     "@nexus/db": "workspace:*",
+    "@nexus/integrations": "workspace:*",
     "@nexus/money": "workspace:*",
     "@nexus/observability": "workspace:*",
     "@nexus/ui": "workspace:*",

@@ -33,3 +33,12 @@ Both assume a REST API. Nexus Cloud uses Next.js server actions for every write 
 - No hand-maintained API contract has to be kept in sync while nothing external depends on it.
 - The E2E suite carries more of the integration load, so it must stay fast and deterministic. It currently runs about 29 tests in 3–4 minutes.
 - Revisit this ADR when the first public endpoint is added in Sprint 3.
+
+## Revisited in Sprint 3 (2026-11-04)
+
+The first public endpoint arrived: `POST /api/webhooks/github`. As planned:
+
+- **Contract:** the E2E suite drives it the way GitHub does (JSON body, `X-GitHub-Event`, `X-GitHub-Delivery`, `X-Hub-Signature-256`). It asserts the status codes: 202 accepted, 200 duplicate, 401 bad signature, 400 missing headers or invalid JSON, 413 over 1 MB, 503 when GitHub isn't configured. Unit tests cover the signature check itself. A recorded-payload test set (`events.test.ts`) pins the GitHub fields we depend on.
+- **Vitest integration layer:** added in `packages/integrations` (`pnpm --filter @nexus/integrations test:int`). It runs the webhook processor against the real local Supabase: idempotency, retries with backoff, the dead-letter state, and installation changes. CI runs it in the E2E job, which already has the full stack.
+- **Calls out to GitHub** are tested against a local fake GitHub (`tests/fake-github/server.mjs`), which verifies the app's RS256 JWT with a per-run key pair. The nightly contract test against the real GitHub API (plan, Sprint 3) needs the test App and a test repository. It is tracked as the Sprint 3 carry-over item in docs/runbooks/github-app.md.
+- **OpenAPI** still waits for a second public endpoint. The setup callback (`/integrations/github/setup`) is a browser redirect for the signed-in owner, not an API.

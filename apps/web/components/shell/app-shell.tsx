@@ -33,7 +33,7 @@ function navGroups(viewer: ShellViewer): NavGroup[] {
       items: [
         { href: "/", label: "Cockpit" },
         { href: "/projects", label: "Projects" },
-        { label: "Repositories", sprint: 3 },
+        { href: "/repositories", label: "Repositories" },
         { label: "Agents", sprint: 6 },
         { label: "Tests", sprint: 7 },
         { label: "Deployments", sprint: 8 },

@@ -62,7 +62,15 @@ export function isCrossSiteMutation(
   }
 }
 
+/**
+ * Webhook endpoints authenticate each request by its signature instead of a session or an Origin
+ * header (GitHub sends neither), so they skip the session redirect and the CSRF check.
+ */
+export function isSignedWebhookPath(pathname: string): boolean {
+  return pathname.startsWith("/api/webhooks/");
+}
+
 /** Paths reachable without a session. Everything else redirects to /login. */
 export function isPublicPath(pathname: string): boolean {
-  return pathname === "/login" || pathname.startsWith("/auth/");
+  return pathname === "/login" || pathname.startsWith("/auth/") || isSignedWebhookPath(pathname);
 }

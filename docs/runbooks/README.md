@@ -5,5 +5,6 @@
 - [Staging environment](staging.md)
 - [Turn on error reporting (Sentry)](sentry.md)
 - [Nexus AI Hub database](hub-database.md)
+- [Register the Nexus GitHub App](github-app.md)
 
 Deploy, rollback, restore and incident runbooks for the app are added from Sprint 8. Each lists its trigger, steps, verification and owner.

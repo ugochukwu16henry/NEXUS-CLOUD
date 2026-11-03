@@ -113,6 +113,8 @@ jobs:
       - run: pnpm --filter @nexus/web build
       - name: No server-only secret values in browser-facing output
         run: node --env-file=apps/web/.env.local scripts/check-bundle-secrets.mjs
+      - name: Integration tests (webhook processor against local Supabase)
+        run: pnpm --filter @nexus/integrations test:int
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
         env:

@@ -51,8 +51,10 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     userId: user.id,
     email: user.email ?? "",
     displayName: profile?.display_name ?? null,
+    // This session's level comes from its token; whether an authenticator exists comes from the
+    // Auth server (getUser), so a session started before enrolment still sees the new factor.
     aal: aalData?.currentLevel === "aal2" ? "aal2" : "aal1",
-    hasMfa: aalData?.nextLevel === "aal2",
+    hasMfa: (user.factors ?? []).some((factor) => factor.status === "verified"),
     workspaceId: membership?.workspace_id ?? null,
     workspaceName: (Array.isArray(workspace) ? workspace[0]?.name : workspace?.name) ?? null,
     role: (membership?.role as Role | undefined) ?? null,
