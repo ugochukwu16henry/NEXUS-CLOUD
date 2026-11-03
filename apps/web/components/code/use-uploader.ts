@@ -23,17 +23,22 @@ const parseList = (value: string | undefined): { path: string; reason: string }[
  * to storage four at a time, then have the server check what arrived (finish). Progress is shown
  * in the panel and the result is announced for screen readers.
  */
-export function useUploader(projectId: string, taskId: string, target: "worktree" | "attachment") {
+export function useUploader(
+  projectId: string,
+  taskId: string | null,
+  target: "worktree" | "attachment" | "chat",
+) {
   const router = useRouter();
   const [status, setStatus] = useState<UploadStatus>({ phase: "idle" });
 
   /** `earlier` carries notes from before the upload (files a zip left out). */
-  async function upload(picked: PickedFile[], earlier: string[] = []) {
+  /** Returns the ids of the files that were kept (for chat uploads, to attach to a message). */
+  async function upload(picked: PickedFile[], earlier: string[] = []): Promise<string[]> {
     if (picked.length === 0) {
       if (earlier.length > 0) {
         setStatus({ phase: "error", message: "Nothing to upload.", notes: earlier });
       }
-      return;
+      return [];
     }
     setStatus({ phase: "preparing", total: picked.length });
 
@@ -47,7 +52,7 @@ export function useUploader(projectId: string, taskId: string, target: "worktree
 
     const form = new FormData();
     form.set("projectId", projectId);
-    form.set("taskId", taskId);
+    if (taskId) form.set("taskId", taskId);
     form.set("target", target);
     form.set(
       "manifest",
@@ -67,7 +72,7 @@ export function useUploader(projectId: string, taskId: string, target: "worktree
         message: prepared.message ?? "The upload couldn't start.",
         notes,
       });
-      return;
+      return [];
     }
 
     const uploads = JSON.parse(prepared.data.uploads ?? "[]") as { path: string; url: string }[];
@@ -106,6 +111,7 @@ export function useUploader(projectId: string, taskId: string, target: "worktree
     });
     announce(message);
     router.refresh();
+    return finished.data?.artifactIds ? (JSON.parse(finished.data.artifactIds) as string[]) : [];
   }
 
   return { status, upload };

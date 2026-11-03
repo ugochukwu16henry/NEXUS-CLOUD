@@ -51,6 +51,60 @@ export type Database = {
           },
         ]
       }
+      agent_messages: {
+        Row: {
+          artifact_ids: string[]
+          author: string
+          content: string
+          cost_usd_micros: number
+          created_at: string
+          id: string
+          model: string | null
+          project_id: string
+          provider: Database["public"]["Enums"]["model_provider"] | null
+          task_id: string | null
+        }
+        Insert: {
+          artifact_ids?: string[]
+          author: string
+          content: string
+          cost_usd_micros?: number
+          created_at?: string
+          id?: string
+          model?: string | null
+          project_id: string
+          provider?: Database["public"]["Enums"]["model_provider"] | null
+          task_id?: string | null
+        }
+        Update: {
+          artifact_ids?: string[]
+          author?: string
+          content?: string
+          cost_usd_micros?: number
+          created_at?: string
+          id?: string
+          model?: string | null
+          project_id?: string
+          provider?: Database["public"]["Enums"]["model_provider"] | null
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_messages_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_runs: {
         Row: {
           budget_usd_micros: number
@@ -136,6 +190,7 @@ export type Database = {
           content_type: string
           created_at: string
           filename: string
+          folder: string | null
           id: string
           kind: Database["public"]["Enums"]["artifact_kind"]
           project_id: string
@@ -153,6 +208,7 @@ export type Database = {
           content_type: string
           created_at?: string
           filename: string
+          folder?: string | null
           id?: string
           kind: Database["public"]["Enums"]["artifact_kind"]
           project_id: string
@@ -170,6 +226,7 @@ export type Database = {
           content_type?: string
           created_at?: string
           filename?: string
+          folder?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["artifact_kind"]
           project_id?: string
@@ -1622,7 +1679,7 @@ export type Database = {
       requirement_priority: "must" | "should" | "could" | "wont"
       sandbox_session_kind: "terminal" | "agent"
       task_link_kind: "branch" | "commit" | "pull_request"
-      upload_target: "worktree" | "attachment"
+      upload_target: "worktree" | "attachment" | "chat"
       webhook_status: "pending" | "processing" | "processed" | "failed" | "dead"
       workflow_state:
         | "backlog"
@@ -1807,7 +1864,7 @@ export const Constants = {
       requirement_priority: ["must", "should", "could", "wont"],
       sandbox_session_kind: ["terminal", "agent"],
       task_link_kind: ["branch", "commit", "pull_request"],
-      upload_target: ["worktree", "attachment"],
+      upload_target: ["worktree", "attachment", "chat"],
       webhook_status: ["pending", "processing", "processed", "failed", "dead"],
       workflow_state: [
         "backlog",

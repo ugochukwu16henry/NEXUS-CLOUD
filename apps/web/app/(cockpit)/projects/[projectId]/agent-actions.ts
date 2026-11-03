@@ -1,11 +1,10 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { decideCommand as decideCommandPolicy, issueTicket, validateContract } from "@nexus/agents";
-import { usdToMicros } from "@nexus/model-gateway";
+import { decideCommand as decideCommandPolicy, issueTicket } from "@nexus/agents";
 import { defineAction } from "@/lib/actions";
+import { NO_QUEUE, enqueueRun, queuePlan } from "@/lib/agents/runs";
 import { parseForm } from "@/lib/projects/parse";
 import { id } from "@/lib/projects/schemas";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -23,18 +22,6 @@ async function visibleProject(projectId: string) {
 function refresh(projectId: string) {
   revalidatePath(`/projects/${projectId}`, "layout");
 }
-
-/** Hands a run to the worker (pg-boss). The key makes a double submit one job. */
-async function enqueue(runId: string, key: string): Promise<boolean> {
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) return false;
-  const { enqueueAgentRun, startBoss } = await import("@nexus/agents/boss");
-  const boss = await startBoss(databaseUrl);
-  await enqueueAgentRun(boss, { runId }, key);
-  return true;
-}
-
-const NO_QUEUE = "Set DATABASE_URL so the worker queue can run this.";
 
 export const planAgent = defineAction(
   {
@@ -54,54 +41,12 @@ export const planAgent = defineAction(
     if (!(await visibleProject(input.projectId))) {
       return { status: "error", message: "That project no longer exists.", audit };
     }
-    if (!process.env.DATABASE_URL) return { status: "error", message: NO_QUEUE, audit };
-    const admin = createSupabaseAdminClient();
-    const [limits, { data: models }] = await Promise.all([
-      getWorkspaceLimits(input.projectId),
-      admin
-        .from("project_model_settings")
-        .select("run_budget_usd")
-        .eq("project_id", input.projectId)
-        .maybeSingle(),
-    ]);
-    // The owner's own limits (ADR 0018): the per-run budget and the step limit from settings.
-    const contract = validateContract({
-      purpose: input.purpose,
-      context: "The task's files in a sandbox: the repository plus the task's change set.",
-      expectedOutput: "An approved plan, then a reviewable diff.",
-      budgetUsdMicros: Math.max(1, usdToMicros(Number(models?.run_budget_usd ?? 0.25))),
-      maxIterations: limits.agentMaxIterations,
-      stopCondition:
-        "Stop when the plan is waiting for approval, the work is done, the budget or step limit is reached, or the owner cancels.",
-      allowedTools: ["read_file", "search", "write_file", "run_command"],
-    });
-    if (!contract.ok) {
-      return { status: "error", message: "The agent contract is incomplete.", audit };
-    }
-    const { data: existing } = await admin
-      .from("agent_runs")
-      .select("id")
-      .eq("project_id", input.projectId)
-      .eq("idempotency_key", input.idempotencyKey)
-      .maybeSingle();
-    if (existing) {
+    const queued = await queuePlan(input);
+    if (!queued.ok) return { status: "error", message: queued.message, audit };
+    if (queued.duplicate) {
       return { status: "success", message: "That plan was already requested.", audit };
     }
-    const runId = randomUUID();
-    const { error } = await admin.from("agent_runs").insert({
-      id: runId,
-      project_id: input.projectId,
-      task_id: input.taskId,
-      kind: "planner",
-      status: "queued",
-      purpose: contract.contract.purpose,
-      stop_condition: contract.contract.stopCondition,
-      budget_usd_micros: contract.contract.budgetUsdMicros,
-      max_iterations: contract.contract.maxIterations,
-      idempotency_key: input.idempotencyKey,
-    });
-    if (error) return { status: "error", message: "Couldn't queue the plan.", audit };
-    await enqueue(runId, input.idempotencyKey);
+    const runId = queued.runId;
     refresh(input.projectId);
     return {
       status: "success",
@@ -155,7 +100,7 @@ export const approvePlan = defineAction(
     if (!moved || moved.length === 0) {
       return { status: "error", message: "This plan is not waiting for approval.", audit };
     }
-    await enqueue(run.id, `code-${run.id}`);
+    await enqueueRun(run.id, `code-${run.id}`);
     refresh(input.projectId);
     return {
       status: "success",
@@ -269,7 +214,7 @@ export const decideCommand = defineAction(
       .update({ status: "queued" })
       .eq("id", row.run_id)
       .eq("status", "waiting_approval");
-    await enqueue(row.run_id, `resume-${row.id}`);
+    await enqueueRun(row.run_id, `resume-${row.id}`);
     refresh(input.projectId);
     return {
       status: "success",

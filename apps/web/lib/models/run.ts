@@ -13,6 +13,7 @@ import {
   adaptersFromKeys,
   createFixtureAdapter,
   createProjectGateway,
+  type GatewayMessage,
   type LedgerUsage,
   type RouteChoice,
   type StaffAdapter,
@@ -124,6 +125,9 @@ async function loadSettings(
 export type ModelCallResult = {
   status: "success" | "error";
   message: string;
+  /** The model's reply alone; `message` adds budget warnings and fallback notes. */
+  reply?: string;
+  notes?: string[];
   metadata?: Record<string, string | number | boolean | null>;
 };
 
@@ -137,6 +141,25 @@ export async function runModelPrompt(input: {
   prompt: string;
   allowExpensive: boolean;
   /** The owner's own pick; otherwise the route for the task type. */
+  manual?: RouteChoice | null;
+}): Promise<ModelCallResult> {
+  return runModelMessages({
+    projectId: input.projectId,
+    taskKind: input.taskKind,
+    messages: [{ role: "user", content: input.prompt }],
+    maxOutputTokens: 256,
+    allowExpensive: input.allowExpensive,
+    manual: input.manual ?? null,
+  });
+}
+
+/** A whole conversation (the project Agent chat), through the same budget guard and ledger. */
+export async function runModelMessages(input: {
+  projectId: string;
+  taskKind: TaskKind;
+  messages: GatewayMessage[];
+  maxOutputTokens: number;
+  allowExpensive: boolean;
   manual?: RouteChoice | null;
 }): Promise<ModelCallResult> {
   const supabase = await createSupabaseServerClient();
@@ -179,8 +202,8 @@ export async function runModelPrompt(input: {
   try {
     const result = await gateway.complete({
       taskKind: input.taskKind,
-      messages: [{ role: "user", content: input.prompt }],
-      maxOutputTokens: 256,
+      messages: input.messages,
+      maxOutputTokens: input.maxOutputTokens,
       allowExpensive: input.allowExpensive,
       manual: input.manual ?? null,
     });
@@ -200,6 +223,8 @@ export async function runModelPrompt(input: {
     outcome = {
       status: "success",
       message: [result.text, ...warnings, switched].filter(Boolean).join(" "),
+      reply: result.text,
+      notes: [...warnings, switched].filter(Boolean),
       metadata: {
         provider: result.provider,
         model: result.model,

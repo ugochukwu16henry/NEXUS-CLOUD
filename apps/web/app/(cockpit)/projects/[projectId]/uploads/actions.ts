@@ -48,12 +48,16 @@ const manifest = z
     }
   });
 
-const prepareInput = z.object({
-  projectId: id,
-  taskId: id,
-  target: z.enum(["worktree", "attachment"]),
-  manifest,
-});
+// "chat": files added in the project's Agent chat. They belong to the project, not a task, and
+// keep their folders.
+const prepareInput = z
+  .object({
+    projectId: id,
+    taskId: id.optional(),
+    target: z.enum(["worktree", "attachment", "chat"]),
+    manifest,
+  })
+  .refine((input) => input.target === "chat" || input.taskId, { message: "Missing task." });
 
 type BatchFile = { path: string; key: string; size: number };
 
@@ -73,26 +77,41 @@ export const prepareUpload = defineAction(
   async ({ projectId, taskId, target, manifest: files }, { viewer }): Promise<HandlerResult> => {
     const audit = {
       projectId,
-      targetType: "task",
-      targetId: taskId,
+      targetType: taskId ? "task" : "project",
+      targetId: taskId ?? projectId,
       metadata: { target, requested: files.length },
     };
     const supabase = await createSupabaseServerClient();
-    const { data: task } = await supabase
-      .from("tasks")
-      .select("id")
-      .eq("id", taskId)
-      .eq("project_id", projectId)
-      .maybeSingle();
-    if (!task) return { status: "error", message: "That task no longer exists.", audit };
+    if (taskId) {
+      const { data: task } = await supabase
+        .from("tasks")
+        .select("id")
+        .eq("id", taskId)
+        .eq("project_id", projectId)
+        .maybeSingle();
+      if (!task) return { status: "error", message: "That task no longer exists.", audit };
+    } else {
+      const { data: project } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("id", projectId)
+        .maybeSingle();
+      if (!project) return { status: "error", message: "That project no longer exists.", audit };
+    }
     const limits = await getWorkspaceLimits(projectId);
 
     let accepted: PlannedFile[];
     let skipped: { path: string; reason: string }[] = [];
     let rejected: { path: string; reason: string }[] = [];
     let keyPrefix: string;
-    if (target === "worktree") {
-      const changeset = await getOpenChangeset(taskId);
+    if (target === "chat") {
+      // Same folder rules as the code workspace: paths checked, node_modules and the like skipped.
+      const plan = planUpload(files, limits);
+      if (!plan.ok) return { status: "error", message: plan.message, audit };
+      ({ accepted, skipped, rejected } = plan);
+      keyPrefix = projectId;
+    } else if (target === "worktree") {
+      const changeset = await getOpenChangeset(taskId!);
       if (!changeset) return { status: "error", message: "Start editing the task first.", audit };
       const lock = decideLock(
         { lockedBy: changeset.locked_by, lockedUntil: changeset.locked_until },
@@ -143,7 +162,7 @@ export const prepareUpload = defineAction(
       .from("upload_batches")
       .insert({
         project_id: projectId,
-        task_id: taskId,
+        task_id: taskId ?? null,
         target,
         files: batchFiles,
         created_by: viewer!.userId,
@@ -208,6 +227,7 @@ export const finishUpload = defineAction(
     const problems: string[] = [];
     let added = 0;
     let held = 0;
+    const artifactIds: string[] = [];
 
     // Worktree uploads are compared with the branch, to tell new files from changed ones.
     const changeset =
@@ -241,7 +261,7 @@ export const finishUpload = defineAction(
       const bytes = new Uint8Array(await data.arrayBuffer());
       const remove = () => admin.storage.from(bucket).remove([file.key]);
       // The browser declared a size; the stored object is what counts.
-      const max = (batch.target === "worktree" ? limits.maxFileMb : limits.attachmentMaxMb) * MB;
+      const max = (batch.target === "attachment" ? limits.attachmentMaxMb : limits.maxFileMb) * MB;
       if (bytes.byteLength > max || bytes.byteLength !== file.size) {
         problems.push(`${file.path}: size doesn't match what was declared`);
         await remove();
@@ -280,7 +300,8 @@ export const finishUpload = defineAction(
             : content.kind === "text"
               ? "text"
               : "other";
-      if (!limits.attachmentKinds.includes(kind)) {
+      // Chat files are any project file (code, data, designs); task attachments follow the setting.
+      if (batch.target === "attachment" && !limits.attachmentKinds.includes(kind)) {
         problems.push(`${file.path}: ${content.type} files aren't allowed as attachments`);
         await remove();
         return;
@@ -290,19 +311,28 @@ export const finishUpload = defineAction(
         await remove();
         return;
       }
-      const { error: rowError } = await admin.from("artifacts").insert({
-        project_id: projectId,
-        task_id: batch.task_id,
-        kind,
-        filename: file.path,
-        content_type: content.type,
-        size_bytes: bytes.byteLength,
-        sha256: sha256Hex(bytes),
-        storage_key: file.key,
-        uploaded_by: viewer!.userId,
-      });
-      if (rowError) problems.push(`${file.path}: couldn't be saved`);
-      else added += 1;
+      const slash = file.path.lastIndexOf("/");
+      const { data: row, error: rowError } = await admin
+        .from("artifacts")
+        .insert({
+          project_id: projectId,
+          task_id: batch.task_id,
+          kind,
+          filename: attachmentName(slash === -1 ? file.path : file.path.slice(slash + 1)),
+          folder: batch.target === "chat" && slash > 0 ? file.path.slice(0, slash) : null,
+          content_type: content.type,
+          size_bytes: bytes.byteLength,
+          sha256: sha256Hex(bytes),
+          storage_key: file.key,
+          uploaded_by: viewer!.userId,
+        })
+        .select("id")
+        .single();
+      if (rowError || !row) problems.push(`${file.path}: couldn't be saved`);
+      else {
+        added += 1;
+        artifactIds.push(row.id);
+      }
     });
 
     revalidatePath(`/projects/${projectId}`, "layout");
@@ -312,7 +342,10 @@ export const finishUpload = defineAction(
     return {
       status: problems.length > 0 && added + held === 0 ? "error" : "success",
       message: `${parts.join(", ")}.`,
-      data: { problems: JSON.stringify(problems.slice(0, 50)) },
+      data: {
+        problems: JSON.stringify(problems.slice(0, 50)),
+        artifactIds: JSON.stringify(artifactIds),
+      },
       audit: {
         ...audit,
         metadata: { target: batch.target, added, held, problems: problems.length },

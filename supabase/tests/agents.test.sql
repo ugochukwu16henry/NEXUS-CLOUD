@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(11);
+select plan(15);
 
 delete from public.memberships where role = 'owner';
 
@@ -73,8 +73,28 @@ select throws_ok(
   '23505', null, 'a run waits on one command at a time'
 );
 
+insert into public.agent_messages (project_id, author, content) values
+  ('44000000-0000-0000-0000-000000000001', 'owner', 'Build a login form'),
+  ('44000000-0000-0000-0000-000000000001', 'agent', 'Here is a plan.');
+select throws_ok(
+  $$insert into public.agent_messages (project_id, author, content)
+    values ('44000000-0000-0000-0000-000000000001', 'stranger', 'hi')$$,
+  '23514', null, 'a chat message is from the owner or the agent'
+);
+
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"24000000-0000-0000-0000-00000000000a","role":"authenticated"}';
+
+select is(
+  (select count(*)::int from public.agent_messages),
+  2,
+  'the owner reads the project conversation'
+);
+select throws_ok(
+  $$insert into public.agent_messages (project_id, author, content)
+    values ('44000000-0000-0000-0000-000000000001', 'owner', 'from the browser')$$,
+  '42501', null, 'the browser cannot write chat messages'
+);
 
 select is(
   (select purpose from public.agent_runs where id = '64000000-0000-0000-0000-000000000001'),
@@ -108,6 +128,11 @@ select is(
   (select count(*)::int from public.agent_runs),
   0,
   'a client sees no runs'
+);
+select is(
+  (select count(*)::int from public.agent_messages),
+  0,
+  'someone who is not the owner sees no conversation'
 );
 select throws_ok(
   'select count(*) from public.sandbox_sessions',

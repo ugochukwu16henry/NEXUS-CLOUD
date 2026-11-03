@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getLatestMessages } from "@/lib/agents/chat";
 import { listRecentRuns } from "@/lib/agents/queries";
+import { listProjects } from "@/lib/projects/queries";
 import { formatMicros } from "@/lib/models/queries";
 
 export const metadata: Metadata = { title: "Agents · Nexus Cloud" };
@@ -21,11 +23,22 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 /**
- * Every agent run across the owner's projects (Sprint 6): what each one is doing, what it cost,
- * and which ones wait for the owner. Runs start from a task's Agent panel; this page links back.
+ * The way into each project's Agent chat (newest conversation first), then everything waiting for
+ * the owner, then every run across projects.
  */
 export default async function AgentsPage() {
-  const { runs, waiting } = await listRecentRuns();
+  const [{ runs, waiting }, latest, projects] = await Promise.all([
+    listRecentRuns(),
+    getLatestMessages(),
+    listProjects(),
+  ]);
+  const open = projects
+    .filter((project) => !project.archived_at)
+    .sort(
+      (a, b) =>
+        Date.parse(latest.get(b.id)?.created_at ?? b.updated_at) -
+        Date.parse(latest.get(a.id)?.created_at ?? a.updated_at),
+    );
   const byRun = new Map(runs.map((run) => [run.id, run]));
   const taskHref = (run: { project_id: string; task_id: string }) =>
     `/projects/${run.project_id}/tasks/${run.task_id}`;
@@ -35,10 +48,49 @@ export default async function AgentsPage() {
       <div className="space-y-1">
         <h1 className="text-xl font-semibold">Agents</h1>
         <p className="text-sm text-nx-muted">
-          Planner and coder runs across your projects. Start one from a task&apos;s Agent panel: the
-          planner proposes, you approve, and the coder works on the task&apos;s files in a sandbox.
+          Each project has its own conversation with the agent, kept for good. Open one to carry on
+          where you left off.
         </p>
       </div>
+
+      <section aria-labelledby="chats-heading" className="space-y-2">
+        <h2 id="chats-heading" className="text-lg font-semibold">
+          Conversations
+        </h2>
+        {open.length === 0 ? (
+          <p className="text-sm text-nx-muted">
+            No projects yet.{" "}
+            <Link href="/projects" className="text-nx-blue underline">
+              Create one
+            </Link>{" "}
+            to start talking to the agent.
+          </p>
+        ) : (
+          <ul
+            className="divide-y divide-nx-border rounded-lg border border-nx-border"
+            aria-label="Project conversations"
+          >
+            {open.map((project) => {
+              const last = latest.get(project.id);
+              return (
+                <li key={project.id}>
+                  <Link
+                    href={`/projects/${project.id}/agent`}
+                    className="block space-y-0.5 px-4 py-3 hover:bg-nx-raised"
+                  >
+                    <span className="block font-medium text-nx-blue underline">{project.name}</span>
+                    <span className="block truncate text-sm text-nx-muted">
+                      {last
+                        ? `${last.author === "owner" ? "You" : "Agent"}: ${last.content}`
+                        : "No messages yet. Start the conversation."}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
       <section aria-labelledby="waiting-heading" className="space-y-2">
         <h2 id="waiting-heading" className="text-lg font-semibold">

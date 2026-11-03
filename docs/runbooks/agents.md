@@ -22,7 +22,14 @@ Cancel stops a run that is queued, running, or waiting. A run that hits its step
 
 ## Talking to the agent
 
-The Agent panel's message box works like a chat: type, or tap the **mic** and speak. Chrome, Edge and Safari transcribe in the browser for free, live. Elsewhere (Firefox, some phones) the mic records up to five minutes and the server transcribes it with Groq's Whisper (free tier; set `GROQ_API_KEY`), falling back to OpenAI. The recording goes to that provider only and is not stored; its cost is on the usage ledger and counts against the project budget and the monthly cap. **+** adds files, a folder or a .zip to the task's changes (once the task has a branch), or pictures and PDFs to the task.
+Every project has its own **Agent** chat (project tab **Agent**, or **Agents** in the menu, which lists each project's conversation, newest first). It is one conversation per project, saved in the Nexus database, so opening a project again shows everything said before; another project never sees it.
+
+- **Type or talk.** Tap the **mic**: Chrome, Edge and Safari turn speech into text in the browser, free and live. Elsewhere it records up to five minutes and the server transcribes it with Groq Whisper (free tier; `GROQ_API_KEY`), falling back to OpenAI. Recordings are not stored.
+- **+ adds files, a whole folder, or a .zip** (on a phone: zip the folder first). They belong to this project, keep their folders, skip `node_modules` and the like, and go with the next message. Secrets are refused.
+- **Replies** go through the project's models and budgets (Project → Settings → Models); pick a model next to the mic, or leave it on Automatic. The agent sees the last 30 messages and the text of the files sent with the newest one; older files are listed by name. Each reply shows its model and cost.
+- **Make it a task** under one of your messages creates a task and queues its plan; open the task to approve the plan, and the coder works in a sandbox on that task's own branch.
+
+A task's own Agent panel (task page, or the Code tab with a task) has the same mic and + for that one task.
 
 ## Terminal
 

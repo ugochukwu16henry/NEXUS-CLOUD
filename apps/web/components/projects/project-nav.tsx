@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const SECTIONS = [
   { segment: "", label: "Overview" },
+  { segment: "/agent", label: "Agent" },
   { segment: "/board", label: "Board" },
   { segment: "/requirements", label: "Requirements" },
   { segment: "/milestones", label: "Milestones" },
