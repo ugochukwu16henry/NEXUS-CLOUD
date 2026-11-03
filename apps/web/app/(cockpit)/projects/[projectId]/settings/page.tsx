@@ -4,7 +4,14 @@ import { ActionForm } from "@/components/ui/action-form";
 import { Hidden, SelectField, TextField, buttonSecondary } from "@/components/ui/fields";
 import { getProject } from "@/lib/projects/queries";
 import { getWorkspaceLimits } from "@/lib/workspace/server";
+import {
+  formatMicros,
+  formatUsd,
+  getProjectModelSettings,
+  projectSpentMicros,
+} from "@/lib/models/queries";
 import { updateWorkspaceSettings } from "./actions";
+import { updateProjectModelSettings } from "./model-actions";
 
 export const metadata: Metadata = { title: "Project settings · Nexus Cloud" };
 
@@ -14,10 +21,23 @@ export default async function ProjectSettingsPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const [project, limits] = await Promise.all([
+  const [project, limits, modelSettings, spent] = await Promise.all([
     getProject(projectId),
     getWorkspaceLimits(projectId),
+    getProjectModelSettings(projectId),
+    projectSpentMicros(projectId),
   ]);
+  const allowed = new Set(
+    modelSettings?.allowed_providers ?? [
+      "anthropic",
+      "openai",
+      "gemini",
+      "xai",
+      "deepseek",
+      "groq",
+      "openrouter",
+    ],
+  );
 
   return (
     <main id="main" className="max-w-xl space-y-10 p-6">
@@ -142,6 +162,69 @@ export default async function ProjectSettingsPage({
             defaultValue={limits.skipFolders.join(", ")}
             maxLength={1000}
           />
+        </ActionForm>
+      </section>
+
+      <section aria-labelledby="models-heading" className="space-y-3">
+        <h2 id="models-heading" className="text-base font-semibold">
+          Models
+        </h2>
+        <p className="text-sm text-nx-muted">
+          Spent {formatMicros(spent)} of {formatUsd(Number(modelSettings?.monthly_budget_usd ?? 5))}{" "}
+          this month. When a provider is down, rate-limited or declines, the next allowed provider
+          answers and the switch is shown. Narrow the providers, or turn fallback off, for a project
+          with privacy needs.
+        </p>
+        <ActionForm action={updateProjectModelSettings} submitLabel="Save model settings">
+          <Hidden name="projectId" value={project.id} />
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              name="monthlyBudget"
+              label="Project budget (USD / month)"
+              type="number"
+              defaultValue={modelSettings?.monthly_budget_usd ?? 5}
+              required
+            />
+            <TextField
+              name="runBudget"
+              label="Per-run cap (USD)"
+              type="number"
+              defaultValue={modelSettings?.run_budget_usd ?? 0.25}
+              required
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="allowFallback"
+              defaultChecked={modelSettings?.allow_fallback ?? true}
+            />
+            If a provider is down or declines, try the next allowed one and show the switch
+          </label>
+          <fieldset className="space-y-1 text-sm">
+            <legend className="mb-1 font-medium">Providers allowed</legend>
+            {(
+              [
+                ["anthropic", "Anthropic"],
+                ["openai", "OpenAI"],
+                ["gemini", "Gemini"],
+                ["xai", "xAI"],
+                ["deepseek", "DeepSeek"],
+                ["groq", "Groq"],
+                ["openrouter", "OpenRouter"],
+              ] as const
+            ).map(([value, label]) => (
+              <label key={value} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="allowed"
+                  value={value}
+                  defaultChecked={allowed.has(value)}
+                />
+                {label}
+              </label>
+            ))}
+          </fieldset>
         </ActionForm>
       </section>
     </main>

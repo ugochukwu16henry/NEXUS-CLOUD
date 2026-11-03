@@ -34,10 +34,17 @@ export const serverEnvSchema = publicEnvSchema.extend({
   GITHUB_API_URL: z.url().default("https://api.github.com"),
   GITHUB_WEB_URL: z.url().default("https://github.com"),
   XAI_API_KEY: z.string().optional(),
+  GROQ_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   DEEPSEEK_API_KEY: z.string().optional(),
+  OPENROUTER_API_KEY: z.string().optional(),
+  /**
+   * Local and end-to-end tests only. A recorded reply, with no provider call.
+   * Ignored unless the Supabase URL is localhost.
+   */
+  NEXUS_MODEL_FIXTURE: z.enum(["0", "1"]).default("0"),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;

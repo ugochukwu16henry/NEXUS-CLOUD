@@ -6,7 +6,7 @@ A personal AI-powered software engineering cloud: one dark cockpit that coordina
 
 This repository also holds **Nexus AI Hub** (formerly Zentrix AI Hub), the public product: pay-as-you-go AI video, images, coding help and study help in Naira. It lives in a separate customer zone with its own database and keys ([ADR 0015](docs/adr/0015-nexus-ai-hub-integration.md)). Both are products of Zentrix Software Solutions.
 
-**Status:** Sprint 4 (code workspace: explorer, editor, diff, commit/PR/revert, file and folder uploads, attachments) complete. Sprint 3 added the GitHub App and webhook inbox; Sprint 2H brought in Nexus AI Hub. See the [plan](docs/plan/Nexus_Cloud_Structure_Sprint_and_Test_Plan.pdf).
+**Status:** Sprint 5 (model gateway, Anthropic and OpenAI adapters, usage ledger, budget guard) in place. Live benchmark scores are not recorded yet: no provider account is funded. Sprint 4 added the code workspace. See the [plan](docs/plan/Nexus_Cloud_Structure_Sprint_and_Test_Plan.pdf).
 
 ## Repository layout
 
@@ -24,7 +24,7 @@ This repository also holds **Nexus AI Hub** (formerly Zentrix AI Hub), the publi
 | `packages/integrations`  | GitHub App client, webhook verification and processing, task links                |
 | `packages/workspace`     | Path guard, upload checks, secret scan, diff, branch and commit rules, edit lock  |
 | `packages/money`         | Kobo, exchange rates, VAT and margins, shared by both products                    |
-| `packages/model-gateway` | One interface for every AI provider; one gateway per zone                         |
+| `packages/model-gateway` | Routing, pricing, budget guard and provider adapters; one gateway per zone        |
 | `packages/ui`            | Design tokens: dark Console theme and Ink & Cobalt Hub theme                      |
 | `supabase/`              | Migrations, seed data and pgTAP policy tests                                      |
 | `tests/e2e`              | Playwright journeys with axe accessibility checks                                 |

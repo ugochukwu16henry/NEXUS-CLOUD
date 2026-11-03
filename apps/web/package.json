@@ -29,6 +29,7 @@
     "@nexus/core": "workspace:*",
     "@nexus/db": "workspace:*",
     "@nexus/integrations": "workspace:*",
+    "@nexus/model-gateway": "workspace:*",
     "@nexus/money": "workspace:*",
     "@nexus/observability": "workspace:*",
     "@nexus/ui": "workspace:*",

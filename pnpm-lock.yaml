@@ -169,6 +169,9 @@ importers:
       '@nexus/integrations':
         specifier: workspace:*
         version: link:../../packages/integrations
+      '@nexus/model-gateway':
+        specifier: workspace:*
+        version: link:../../packages/model-gateway
       '@nexus/money':
         specifier: workspace:*
         version: link:../../packages/money

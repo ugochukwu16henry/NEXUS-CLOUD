@@ -11,6 +11,7 @@ const SECTIONS = [
   { segment: "/code", label: "Code" },
   { segment: "/repository", label: "Repository" },
   { segment: "/activity", label: "Activity" },
+  { segment: "/assistant", label: "Assistant" },
   { segment: "/settings", label: "Settings" },
 ];
 

@@ -5,10 +5,12 @@
  *
  * Every call reports its usage once, through `onUsage`, which is where each zone does its
  * accounting: the Hub captures a wallet hold, Nexus records spend against its budget cap.
- * Provider adapters arrive in Nexus Sprint 5 and Hub Sprint 3.
+ * Nexus Cloud calls go through `createStaffGateway` (routing, budget guard, ledger). This
+ * `generateText` path stays for a zone that does its own accounting, such as the Hub.
  */
 
-export type ProviderId = "xai" | "groq" | "anthropic" | "openai" | "gemini" | "deepseek";
+export type ProviderId =
+  "xai" | "groq" | "anthropic" | "openai" | "gemini" | "deepseek" | "openrouter";
 export type Zone = "staff" | "customer";
 
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };

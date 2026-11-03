@@ -125,21 +125,30 @@ export function SelectField({
 export function Checkbox({
   name,
   label,
+  hint,
   id = name,
   defaultChecked,
 }: Base & { defaultChecked?: boolean }) {
   return (
-    <div className="flex items-center gap-2">
-      <input
-        id={id}
-        name={name}
-        type="checkbox"
-        defaultChecked={defaultChecked}
-        className="h-4 w-4"
-      />
-      <label htmlFor={id} className="text-sm">
-        {label}
-      </label>
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <input
+          id={id}
+          name={name}
+          type="checkbox"
+          defaultChecked={defaultChecked}
+          aria-describedby={hint ? `${id}-hint` : undefined}
+          className="h-4 w-4"
+        />
+        <label htmlFor={id} className="text-sm">
+          {label}
+        </label>
+      </div>
+      {hint && (
+        <p id={`${id}-hint`} className="text-xs text-nx-muted">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

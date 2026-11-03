@@ -61,6 +61,7 @@ export default defineConfig({
             GITHUB_WEBHOOK_SECRET: process.env.E2E_GITHUB_WEBHOOK_SECRET!,
             GITHUB_API_URL: FAKE_GITHUB,
             GITHUB_WEB_URL: FAKE_GITHUB,
+            NEXUS_MODEL_FIXTURE: "1",
           },
         },
       ],

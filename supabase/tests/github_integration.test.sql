@@ -106,7 +106,7 @@ select is((select count(*)::int from public.repo_commits), 1, 'owner sees commit
 select is((select count(*)::int from public.repo_pull_requests), 1, 'owner sees pull requests');
 select is((select count(*)::int from public.task_links), 1, 'owner sees task links');
 select is(
-  (select delivery_id from public.webhook_events limit 1),
+  (select delivery_id from public.webhook_events where delivery_id = 'pgtap-delivery-1'),
   'pgtap-delivery-1',
   'owner sees delivery status for the dead-letter view'
 );

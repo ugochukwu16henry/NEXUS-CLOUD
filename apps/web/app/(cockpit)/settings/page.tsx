@@ -53,6 +53,18 @@ export default async function SettingsPage() {
         </Link>
       </section>
 
+      <section aria-labelledby="models-heading" className="space-y-2">
+        <h2 id="models-heading" className="text-lg font-semibold">
+          Models and spend
+        </h2>
+        <p className="text-sm text-nx-muted">
+          Monthly cap, default model per task, and the usage ledger.
+        </p>
+        <Link href="/settings/models" className="text-sm text-nx-blue underline">
+          Manage models
+        </Link>
+      </section>
+
       <section aria-labelledby="sessions-heading" className="space-y-4">
         <h2 id="sessions-heading" className="text-lg font-semibold">
           Sessions

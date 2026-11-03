@@ -20,6 +20,8 @@ export const PERMISSIONS = [
   "business:read",
   /** Install or change the GitHub App, retry webhook deliveries (Sprint 3). */
   "integration:manage",
+  /** Raise a spend cap or lift a hard stop (Sprint 5). */
+  "budget:extend",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -42,6 +44,8 @@ export const RISK_PERMISSIONS: ReadonlySet<Permission> = new Set([
   "business:read",
   // Connecting GitHub grants Nexus write access to repositories.
   "integration:manage",
+  // Raising a cap or lifting a hard stop lets models keep spending.
+  "budget:extend",
 ]);
 
 export type AssuranceLevel = "aal1" | "aal2";

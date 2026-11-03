@@ -381,6 +381,27 @@ export type Database = {
           },
         ]
       }
+      model_routes: {
+        Row: {
+          model: string
+          provider: Database["public"]["Enums"]["model_provider"]
+          task_kind: Database["public"]["Enums"]["model_task_kind"]
+          updated_at: string
+        }
+        Insert: {
+          model: string
+          provider: Database["public"]["Enums"]["model_provider"]
+          task_kind: Database["public"]["Enums"]["model_task_kind"]
+          updated_at?: string
+        }
+        Update: {
+          model?: string
+          provider?: Database["public"]["Enums"]["model_provider"]
+          task_kind?: Database["public"]["Enums"]["model_task_kind"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -404,6 +425,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      project_model_settings: {
+        Row: {
+          allow_fallback: boolean
+          allowed_providers: Database["public"]["Enums"]["model_provider"][]
+          extended_until: string | null
+          monthly_budget_usd: number
+          project_id: string
+          run_budget_usd: number
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          allow_fallback?: boolean
+          allowed_providers?: Database["public"]["Enums"]["model_provider"][]
+          extended_until?: string | null
+          monthly_budget_usd?: number
+          project_id: string
+          run_budget_usd?: number
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          allow_fallback?: boolean
+          allowed_providers?: Database["public"]["Enums"]["model_provider"][]
+          extended_until?: string | null
+          monthly_budget_usd?: number
+          project_id?: string
+          run_budget_usd?: number
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_model_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
@@ -753,6 +815,30 @@ export type Database = {
         }
         Relationships: []
       }
+      spend_caps: {
+        Row: {
+          extended_until: string | null
+          monthly_usd: number
+          scope: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          extended_until?: string | null
+          monthly_usd?: number
+          scope?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          extended_until?: string | null
+          monthly_usd?: number
+          scope?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       task_dependencies: {
         Row: {
           created_at: string
@@ -970,6 +1056,93 @@ export type Database = {
           },
         ]
       }
+      usage_ledger: {
+        Row: {
+          cached_tokens: number
+          cost_usd_micros: number
+          created_at: string
+          currency: string
+          error: string | null
+          fallback_from_model: string | null
+          fallback_from_provider:
+            | Database["public"]["Enums"]["model_provider"]
+            | null
+          fx_rate: number
+          id: string
+          image_count: number
+          input_tokens: number
+          latency_ms: number
+          model: string
+          ok: boolean
+          output_tokens: number
+          project_id: string
+          provider: Database["public"]["Enums"]["model_provider"]
+          run_id: string | null
+          task_id: string | null
+        }
+        Insert: {
+          cached_tokens?: number
+          cost_usd_micros: number
+          created_at?: string
+          currency?: string
+          error?: string | null
+          fallback_from_model?: string | null
+          fallback_from_provider?:
+            | Database["public"]["Enums"]["model_provider"]
+            | null
+          fx_rate?: number
+          id?: string
+          image_count?: number
+          input_tokens?: number
+          latency_ms?: number
+          model: string
+          ok: boolean
+          output_tokens?: number
+          project_id: string
+          provider: Database["public"]["Enums"]["model_provider"]
+          run_id?: string | null
+          task_id?: string | null
+        }
+        Update: {
+          cached_tokens?: number
+          cost_usd_micros?: number
+          created_at?: string
+          currency?: string
+          error?: string | null
+          fallback_from_model?: string | null
+          fallback_from_provider?:
+            | Database["public"]["Enums"]["model_provider"]
+            | null
+          fx_rate?: number
+          id?: string
+          image_count?: number
+          input_tokens?: number
+          latency_ms?: number
+          model?: string
+          ok?: boolean
+          output_tokens?: number
+          project_id?: string
+          provider?: Database["public"]["Enums"]["model_provider"]
+          run_id?: string | null
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_ledger_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_ledger_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_events: {
         Row: {
           action: string | null
@@ -1134,6 +1307,20 @@ export type Database = {
       integration_status: "active" | "suspended" | "removed"
       membership_role: "owner" | "client" | "viewer"
       milestone_status: "planned" | "in_progress" | "done"
+      model_provider:
+        | "anthropic"
+        | "openai"
+        | "gemini"
+        | "xai"
+        | "deepseek"
+        | "groq"
+        | "openrouter"
+      model_task_kind:
+        | "planning"
+        | "routine"
+        | "complex_code"
+        | "review"
+        | "research"
       project_status: "active" | "on_hold" | "completed"
       requirement_priority: "must" | "should" | "could" | "wont"
       task_link_kind: "branch" | "commit" | "pull_request"
@@ -1288,6 +1475,22 @@ export const Constants = {
       integration_status: ["active", "suspended", "removed"],
       membership_role: ["owner", "client", "viewer"],
       milestone_status: ["planned", "in_progress", "done"],
+      model_provider: [
+        "anthropic",
+        "openai",
+        "gemini",
+        "xai",
+        "deepseek",
+        "groq",
+        "openrouter",
+      ],
+      model_task_kind: [
+        "planning",
+        "routine",
+        "complex_code",
+        "review",
+        "research",
+      ],
       project_status: ["active", "on_hold", "completed"],
       requirement_priority: ["must", "should", "could", "wont"],
       task_link_kind: ["branch", "commit", "pull_request"],
