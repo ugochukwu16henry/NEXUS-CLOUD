@@ -6,6 +6,8 @@ allowBuilds:
 overrides:
   # GHSA-g3hv-75wg-m249 (moderate, dev-only via eslint). Remove once eslint depends on >=11.0.1.
   minimatch: "11.0.3"
+  # GHSA-q7qp-rjg7-q26m (high, Hub API via @nestjs/platform-express). Remove once Nest depends on >=2.5.0.
+  multer: "^2.5.0"
 # Supply-chain hardening (Semgrep pnpm rules, threat model T15).
 # Wait 7 days before installing a newly published version; most malicious releases are pulled sooner.
 minimumReleaseAge: 10080

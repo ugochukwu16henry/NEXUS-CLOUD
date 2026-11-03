@@ -43,16 +43,19 @@ const secretValues = SERVER_ONLY_ENV_NAMES.map((name) => process.env[name]).filt
 );
 
 // Whole names only: NEXT_PUBLIC_SENTRY_DSN (public by design) must not match SENTRY_DSN.
-const namePatterns = SERVER_ONLY_ENV_NAMES.map((name) => ({
-  name,
-  pattern: new RegExp(`(?<![A-Za-z0-9_])${name}(?![A-Za-z0-9_])`),
-}));
+const isNameChar = (char) => char !== undefined && /[A-Za-z0-9_]/.test(char);
+function containsName(text, name) {
+  for (let i = text.indexOf(name); i !== -1; i = text.indexOf(name, i + 1)) {
+    if (!isNameChar(text[i - 1]) && !isNameChar(text[i + name.length])) return true;
+  }
+  return false;
+}
 
 const problems = [];
 for (const file of files) {
   const text = readFileSync(file, "utf8");
-  for (const { name, pattern } of namePatterns) {
-    if (pattern.test(text)) problems.push(`${file}: contains env name ${name}`);
+  for (const name of SERVER_ONLY_ENV_NAMES) {
+    if (containsName(text, name)) problems.push(`${file}: contains env name ${name}`);
   }
   for (const value of secretValues) {
     if (text.includes(value)) problems.push(`${file}: contains a server-only secret value`);
