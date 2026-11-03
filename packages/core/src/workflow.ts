@@ -32,7 +32,7 @@ export const STATE_LABELS: Record<WorkflowState, string> = {
   needs_human_review: "Needs Human Review",
   approved: "Approved",
   preview_ready: "Preview Ready",
-  client_review: "Client Review",
+  client_review: "Final Review",
   release_approved: "Release Approved",
   deployed: "Deployed",
   verified: "Verified",

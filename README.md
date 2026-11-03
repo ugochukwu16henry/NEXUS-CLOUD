@@ -1,10 +1,8 @@
 # Nexus Cloud
 
-A personal AI-powered software engineering cloud: one dark cockpit that coordinates AI specialist agents, source code, tests, security checks, deployments, a client portal and marketing assets. The owner picks the model for each job, watches spend and approves risky actions.
+A personal AI-powered software engineering cloud for one person, its owner: one dark cockpit that coordinates AI specialist agents, source code, tests, security checks and deployments, and (later) a Studio for videos and images. The owner picks the model for each job, watches spend and approves risky actions. There are no other users, clients or payments ([ADR 0020](docs/adr/0020-owner-only-platform.md)).
 
 > Working name only. Domain and trademark checks are pending.
-
-This repository also holds **Nexus AI Hub** (formerly Zentrix AI Hub), the public product: pay-as-you-go AI video, images, coding help and study help in Naira. It lives in a separate customer zone with its own database and keys ([ADR 0015](docs/adr/0015-nexus-ai-hub-integration.md)). Both are products of Zentrix Software Solutions.
 
 **Status:** Sprint 6 (agent queue, planner and coder, terminal tickets, sandbox limits) in place. The golden-set acceptance rate is not recorded: no provider account is funded. Sprint 5 added the model gateway. See the [plan](docs/plan/Nexus_Cloud_Structure_Sprint_and_Test_Plan.pdf).
 
@@ -12,8 +10,7 @@ This repository also holds **Nexus AI Hub** (formerly Zentrix AI Hub), the publi
 
 | Path                     | What it is                                                                       |
 | ------------------------ | -------------------------------------------------------------------------------- |
-| `apps/web`               | Next.js cockpit: sign-in, MFA, projects, board, audit; Owner Dashboard at /owner |
-| `apps/hub-api`           | Nexus AI Hub API (NestJS): wallet, ledger, pricing, Paystack; its own database   |
+| `apps/web`               | Next.js cockpit: sign-in, MFA, projects, board, code, agents, audit              |
 | `apps/worker`            | Queue consumer for agent runs and the terminal gateway (pg-boss, sandbox)        |
 | `packages/core`          | Domain types and the workflow state machine                                      |
 | `packages/auth`          | Roles, permissions and the MFA rule for risk actions                             |
@@ -23,10 +20,9 @@ This repository also holds **Nexus AI Hub** (formerly Zentrix AI Hub), the publi
 | `packages/config`        | Environment schema; keeps server-only variables out of the browser               |
 | `packages/integrations`  | GitHub App client, webhook verification and processing, task links               |
 | `packages/workspace`     | Path guard, upload checks, secret scan, diff, branch and commit rules, edit lock |
-| `packages/money`         | Kobo, exchange rates, VAT and margins, shared by both products                   |
-| `packages/model-gateway` | Routing, pricing, budget guard and provider adapters; one gateway per zone       |
+| `packages/model-gateway` | Routing, pricing, budget guard, provider catalog and adapters                    |
 | `packages/agents`        | Agent contract, command policy, queue, sandbox limits and terminal tickets       |
-| `packages/ui`            | Design tokens: dark Console theme and Ink & Cobalt Hub theme                     |
+| `packages/ui`            | Design tokens: dark Console theme (Ink & Cobalt kept for the future Studio)      |
 | `supabase/`              | Migrations, seed data and pgTAP policy tests                                     |
 | `tests/e2e`              | Playwright journeys with axe accessibility checks                                |
 | `docs/`                  | ADRs, requirements, threat model, provider register, runbooks, plan              |
@@ -53,7 +49,6 @@ After changing a migration, run `supabase db reset`, then `pnpm db:types`.
 | `pnpm lint` · `pnpm typecheck` · `pnpm format:check` | G1 static                                     |
 | `pnpm test`                                          | G2 unit tests                                 |
 | `pnpm test:db`                                       | G2 RLS and audit-log policy tests (pgTAP)     |
-| `pnpm --filter @nexus/hub-api test:db`               | G2 Hub money path and schema lockdown         |
 | `pnpm --filter @nexus/integrations test:int`         | G2 GitHub webhook processing (local Supabase) |
 | `pnpm build && pnpm check:bundle-secrets`            | No server-only secrets in the browser bundle  |
 | `pnpm build && pnpm test:e2e`                        | G4 E2E, accessibility and security headers    |

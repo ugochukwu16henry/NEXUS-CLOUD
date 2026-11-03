@@ -20,6 +20,8 @@ export type ProviderKeys = {
   OPENAI_API_KEY?: string | undefined;
   XAI_API_KEY?: string | undefined;
   GROQ_API_KEY?: string | undefined;
+  OPENROUTER_API_KEY?: string | undefined;
+  CEREBRAS_API_KEY?: string | undefined;
 };
 
 export function adaptersFromKeys(keys: ProviderKeys): StaffAdapter[] {
@@ -31,6 +33,13 @@ export function adaptersFromKeys(keys: ProviderKeys): StaffAdapter[] {
     adapters.push(createTemplateAdapter({ provider: "xai", apiKey: keys.XAI_API_KEY }));
   if (keys.GROQ_API_KEY)
     adapters.push(createTemplateAdapter({ provider: "groq", apiKey: keys.GROQ_API_KEY }));
+  if (keys.OPENROUTER_API_KEY) {
+    adapters.push(
+      createTemplateAdapter({ provider: "openrouter", apiKey: keys.OPENROUTER_API_KEY }),
+    );
+  }
+  if (keys.CEREBRAS_API_KEY)
+    adapters.push(createTemplateAdapter({ provider: "cerebras", apiKey: keys.CEREBRAS_API_KEY }));
   return adapters;
 }
 

@@ -8,9 +8,22 @@ import type { TokenPrice } from "./types";
  * OpenAI short-context: https://developers.openai.com/api/docs/pricing
  * Accounts are not funded. Do not treat these as a benchmark result.
  */
-export type ListedModel = TokenPrice & { provider: ProviderId; model: string; label: string };
+export type ListedModel = TokenPrice & {
+  provider: ProviderId;
+  model: string;
+  label: string;
+  /** Costs nothing to call (a provider's free model, within its caps). */
+  free?: boolean;
+};
 
 const perMillion = (usd: number) => Math.round(usd * 1_000_000);
+
+const FREE = {
+  inputUsdMicrosPerMillion: 0,
+  outputUsdMicrosPerMillion: 0,
+  cachedInputUsdMicrosPerMillion: 0,
+  free: true,
+} as const;
 
 export const LISTED_MODELS: ListedModel[] = [
   {
@@ -99,6 +112,89 @@ export const LISTED_MODELS: ListedModel[] = [
     cachedInputUsdMicrosPerMillion: perMillion(0.075),
     vision: false,
   },
+  // OpenRouter: prices from its public model list (openrouter.ai/api/v1/models) on 2026-11-03.
+  // ":free" models cost nothing within OpenRouter's caps (about 50 requests a day, 1,000 after a
+  // $10 top-up) and may log prompts, so keep client work on paid models. Free lists change: a
+  // model that disappears fails the call and the router falls back.
+  {
+    provider: "openrouter",
+    model: "nvidia/nemotron-3-ultra-550b-a55b:free",
+    label: "Nemotron 3 Ultra (free) on OpenRouter",
+    ...FREE,
+    vision: false,
+  },
+  {
+    provider: "openrouter",
+    model: "cohere/north-mini-code:free",
+    label: "Cohere North Mini Code (free) on OpenRouter",
+    ...FREE,
+    vision: false,
+  },
+  {
+    provider: "openrouter",
+    model: "google/gemma-4-31b-it:free",
+    label: "Gemma 4 31B (free) on OpenRouter",
+    ...FREE,
+    vision: true,
+  },
+  {
+    provider: "openrouter",
+    model: "qwen/qwen3-coder",
+    label: "Qwen3 Coder 480B on OpenRouter",
+    inputUsdMicrosPerMillion: perMillion(0.3),
+    outputUsdMicrosPerMillion: perMillion(1),
+    cachedInputUsdMicrosPerMillion: perMillion(0.1),
+    vision: false,
+  },
+  {
+    provider: "openrouter",
+    model: "deepseek/deepseek-v4.1-flash",
+    label: "DeepSeek V4.1 Flash on OpenRouter",
+    inputUsdMicrosPerMillion: perMillion(0.045),
+    outputUsdMicrosPerMillion: perMillion(0.5),
+    cachedInputUsdMicrosPerMillion: perMillion(0.012),
+    vision: true,
+  },
+  {
+    provider: "openrouter",
+    model: "z-ai/glm-5.3",
+    label: "GLM 5.3 on OpenRouter",
+    inputUsdMicrosPerMillion: perMillion(0.08),
+    outputUsdMicrosPerMillion: perMillion(3.6),
+    cachedInputUsdMicrosPerMillion: perMillion(0.076),
+    vision: false,
+  },
+  {
+    provider: "openrouter",
+    model: "openai/gpt-oss-120b",
+    label: "gpt-oss-120b on OpenRouter",
+    inputUsdMicrosPerMillion: perMillion(0.15),
+    outputUsdMicrosPerMillion: perMillion(0.6),
+    cachedInputUsdMicrosPerMillion: perMillion(0.075),
+    vision: false,
+  },
+  // Cerebras: its pricing page does not list per-token prices in text; these come from public
+  // trackers on 2026-11-03 (gpt-oss-120b $0.35/$0.75, qwen-3.8-27b $0.99/$1.49 per million).
+  // Re-check in the Cerebras console. No cached-input price is published, so the full input price
+  // is used. New accounts get a one-time $5 credit; there is no renewing free tier.
+  {
+    provider: "cerebras",
+    model: "gpt-oss-120b",
+    label: "gpt-oss-120b on Cerebras",
+    inputUsdMicrosPerMillion: perMillion(0.35),
+    outputUsdMicrosPerMillion: perMillion(0.75),
+    cachedInputUsdMicrosPerMillion: perMillion(0.35),
+    vision: false,
+  },
+  {
+    provider: "cerebras",
+    model: "qwen-3.8-27b",
+    label: "Qwen 3.8 27B on Cerebras",
+    inputUsdMicrosPerMillion: perMillion(0.99),
+    outputUsdMicrosPerMillion: perMillion(1.49),
+    cachedInputUsdMicrosPerMillion: perMillion(0.99),
+    vision: false,
+  },
 ];
 
 export function listedPrice(provider: ProviderId, model: string): TokenPrice | null {
@@ -130,4 +226,6 @@ export const PROVISIONAL_FALLBACKS = [
   { provider: "openai" as const, model: "gpt-6.1-sol" },
   { provider: "xai" as const, model: "grok-4.3" },
   { provider: "groq" as const, model: "openai/gpt-oss-120b" },
+  { provider: "openrouter" as const, model: "qwen/qwen3-coder" },
+  { provider: "cerebras" as const, model: "gpt-oss-120b" },
 ];

@@ -16,8 +16,6 @@ export type Viewer = {
   role: Role | null;
 };
 
-const ROLE_PRIORITY: Record<Role, number> = { owner: 0, client: 1, viewer: 2 };
-
 /** The signed-in user for this request, or null. Cached per request. */
 export const getViewer = cache(async (): Promise<Viewer | null> => {
   const supabase = await createSupabaseServerClient();
@@ -40,10 +38,8 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const user = userData.user;
   if (!user || user.id !== userId) return null;
 
-  // Release 1 has a single workspace per user (ADR 0012); prefer the highest role if several.
-  const membership = [...(memberships ?? [])].sort(
-    (a, b) => ROLE_PRIORITY[a.role as Role] - ROLE_PRIORITY[b.role as Role],
-  )[0];
+  // Owner-only (ADR 0020): only an owner membership grants access; any other row is ignored.
+  const membership = (memberships ?? []).find((row) => row.role === "owner");
   const workspace = membership?.workspaces as
     { name: string } | { name: string }[] | null | undefined;
 
@@ -57,7 +53,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     hasMfa: (user.factors ?? []).some((factor) => factor.status === "verified"),
     workspaceId: membership?.workspace_id ?? null,
     workspaceName: (Array.isArray(workspace) ? workspace[0]?.name : workspace?.name) ?? null,
-    role: (membership?.role as Role | undefined) ?? null,
+    role: membership ? ("owner" satisfies Role) : null,
   };
 });
 

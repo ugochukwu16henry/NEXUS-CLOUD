@@ -59,35 +59,6 @@ jobs:
             exit 1
           }
 
-  # Gate G2 for Nexus AI Hub (ADR 0015): the money path (wallet, ledger, holds, Paystack webhook
-  # replay) and the schema lockdown, on a throwaway database migrated from apps/hub-api/supabase.
-  # Plain PostgreSQL 17 (the hosted version) rather than the Supabase image, so the role-switch
-  # security probe runs too.
-  hub-database:
-    name: Hub API database tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/nexus_hub_test
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @nexus/hub-api test:db
-
   # Gate G4 (system): E2E journeys, accessibility and security headers against a real local stack.
   e2e:
     name: E2E and accessibility

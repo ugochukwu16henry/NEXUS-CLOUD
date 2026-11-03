@@ -29,9 +29,6 @@ export default async function ProjectsPage() {
                 Project
               </th>
               <th scope="col" className="py-1 pr-4 font-medium">
-                Client
-              </th>
-              <th scope="col" className="py-1 pr-4 font-medium">
                 Status
               </th>
               <th scope="col" className="py-1 pr-4 font-medium">
@@ -58,7 +55,6 @@ export default async function ProjectsPage() {
                     </span>
                   )}
                 </td>
-                <td className="py-2 pr-4">{project.client_name ?? "—"}</td>
                 <td className="py-2 pr-4">
                   <Badge tone={STATUS_TONE[project.status]}>{STATUS_LABEL[project.status]}</Badge>
                 </td>
@@ -82,7 +78,6 @@ export default async function ProjectsPage() {
         </h2>
         <ActionForm action={createProject} submitLabel="Create project">
           <TextField name="name" label="Name" required maxLength={120} />
-          <TextField name="clientName" label="Client" maxLength={120} />
           <TextField
             name="stack"
             label="Stack"

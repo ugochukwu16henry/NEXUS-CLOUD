@@ -2,7 +2,7 @@ import { isDone } from "@nexus/core";
 import type { Metadata } from "next";
 import { createMilestone, updateMilestone } from "./actions";
 import { ActionForm } from "@/components/ui/action-form";
-import { Badge, Checkbox, Hidden, SelectField, TextArea, TextField } from "@/components/ui/fields";
+import { Badge, Hidden, SelectField, TextArea, TextField } from "@/components/ui/fields";
 import { getMilestones, getProject, getProjectTasks } from "@/lib/projects/queries";
 
 export const metadata: Metadata = { title: "Milestones · Nexus Cloud" };
@@ -23,7 +23,6 @@ function MilestoneFields({
     criteria?: string;
     target_date?: string | null;
     status?: string;
-    client_visible?: boolean;
   };
   idPrefix: string;
 }) {
@@ -61,12 +60,6 @@ function MilestoneFields({
           options={STATUS_OPTIONS}
         />
       </div>
-      <Checkbox
-        id={`${idPrefix}-visible`}
-        name="clientVisible"
-        label="Show to the client (from Sprint 9)"
-        defaultChecked={values.client_visible}
-      />
     </>
   );
 }

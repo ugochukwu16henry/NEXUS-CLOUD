@@ -1611,6 +1611,7 @@ export type Database = {
         | "deepseek"
         | "groq"
         | "openrouter"
+        | "cerebras"
       model_task_kind:
         | "planning"
         | "routine"
@@ -1793,6 +1794,7 @@ export const Constants = {
         "deepseek",
         "groq",
         "openrouter",
+        "cerebras",
       ],
       model_task_kind: [
         "planning",

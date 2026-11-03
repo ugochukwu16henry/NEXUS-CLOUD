@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ACCESS_LABELS, LISTED_MODELS, PROVIDER_CATALOG } from "@nexus/model-gateway";
 import { ActionForm } from "@/components/ui/action-form";
 import { SelectField, TextField, buttonSecondary } from "@/components/ui/fields";
+import { getServerEnv } from "@/lib/env";
 import { formatMicros, getModelRoutes, getSpendCap, listRecentUsage } from "@/lib/models/queries";
 import { liftGlobalStop, updateGlobalCap, updateRoutes } from "./actions";
 
@@ -13,15 +15,10 @@ const dateFormat = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
-const PROVIDERS = [
-  { value: "anthropic", label: "Anthropic" },
-  { value: "openai", label: "OpenAI" },
-  { value: "gemini", label: "Gemini" },
-  { value: "xai", label: "xAI" },
-  { value: "deepseek", label: "DeepSeek" },
-  { value: "groq", label: "Groq" },
-  { value: "openrouter", label: "OpenRouter" },
-];
+const PROVIDERS = PROVIDER_CATALOG.map((provider) => ({
+  value: provider.id,
+  label: provider.label,
+}));
 
 const KINDS = [
   ["planning", "Planning"],
@@ -39,21 +36,65 @@ export default async function ModelsPage() {
   ]);
   const byKind = new Map(routes.map((route) => [route.task_kind, route]));
   const lifted = cap?.extended_until && new Date(cap.extended_until) > new Date();
+  const env = getServerEnv();
 
   return (
     <main id="main" className="mx-auto max-w-3xl space-y-10 p-6">
       <div className="space-y-2">
         <h1 className="text-xl font-semibold">Models</h1>
         <p className="text-sm text-nx-muted">
-          Keys stay on the server. Anthropic and OpenAI are the live adapters. Gemini, xAI,
-          DeepSeek, Groq and OpenRouter use the same request shape and wait for an account. The
-          routes below are provisional: the live benchmark has not been run, because no provider
-          account is funded.
+          Keys stay on the server. A provider is ready once its key is set there and its models have
+          prices; each project can still allow or block it. The routes below are provisional: the
+          live benchmark has not been run.
         </p>
         <Link href="/settings" className="text-sm text-nx-blue underline">
           Back to settings
         </Link>
       </div>
+
+      <section aria-labelledby="providers-heading" className="space-y-3">
+        <h2 id="providers-heading" className="text-lg font-semibold">
+          Providers
+        </h2>
+        <p className="text-sm text-nx-muted">
+          Free tiers change without notice; check each provider&apos;s console before relying on
+          one. To turn a provider on, add its key on the server (Vercel and the worker on Railway).
+        </p>
+        <ul className="divide-y divide-nx-border" aria-label="Providers">
+          {PROVIDER_CATALOG.map((provider) => {
+            const ready = Boolean(env[provider.keyEnv as keyof typeof env]);
+            const models = LISTED_MODELS.filter((model) => model.provider === provider.id);
+            const free = models.filter((model) => model.free).length;
+            return (
+              <li key={provider.id} className="space-y-1 py-3 text-sm">
+                <p className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{provider.label}</span>
+                  <span
+                    className={`rounded border px-1.5 py-0.5 text-xs ${
+                      provider.access === "paid"
+                        ? "border-nx-border text-nx-muted"
+                        : "border-nx-ok/60 text-nx-ok"
+                    }`}
+                  >
+                    {ACCESS_LABELS[provider.access]}
+                  </span>
+                  <span className={`text-xs ${ready ? "text-nx-ok" : "text-nx-muted"}`}>
+                    {ready ? "Key set" : `Not set: add ${provider.keyEnv}`}
+                  </span>
+                </p>
+                <p className="text-xs text-nx-muted">
+                  {provider.note}{" "}
+                  {models.length > 0
+                    ? `${models.length} priced model${models.length === 1 ? "" : "s"}${
+                        free > 0 ? `, ${free} free` : ""
+                      }.`
+                    : ""}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
       <section aria-labelledby="cap-heading" className="space-y-3">
         <h2 id="cap-heading" className="text-lg font-semibold">

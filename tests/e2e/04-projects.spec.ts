@@ -59,7 +59,6 @@ test.describe("project cockpit", () => {
     await expectAccessible(page);
 
     await page.getByLabel("Name").fill("Pilot app");
-    await page.getByLabel("Client").fill("Acme");
     await page.getByLabel("Budget (USD)").fill("200");
     await page.getByRole("button", { name: "Create project" }).click();
 
@@ -149,7 +148,7 @@ test.describe("project cockpit", () => {
 
     for (const state of [
       "Preview Ready",
-      "Client Review",
+      "Final Review",
       "Release Approved",
       "Deployed",
       "Verified",

@@ -4,6 +4,7 @@ import {
   BudgetExceededError,
   ExpensiveActionRequiredError,
   LISTED_MODELS,
+  PROVIDER_LABELS,
   ProviderDeclinedError,
   RouteBlockedError,
   SchemaError,
@@ -39,15 +40,7 @@ function monthStart(): string {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
 }
 
-const PROVIDER_NAMES: Record<string, string> = {
-  anthropic: "Anthropic",
-  openai: "OpenAI",
-  gemini: "Gemini",
-  xai: "xAI",
-  deepseek: "DeepSeek",
-  groq: "Groq",
-  openrouter: "OpenRouter",
-};
+const PROVIDER_NAMES: Record<string, string> = PROVIDER_LABELS;
 const nameOf = (route: RouteChoice) =>
   `${PROVIDER_NAMES[route.provider] ?? route.provider} ${route.model}`;
 
@@ -56,7 +49,10 @@ export function listAvailableModels(): { value: string; label: string }[] {
   const configured = new Set(liveAdapters().map((adapter) => adapter.id));
   return LISTED_MODELS.filter((model) => configured.has(model.provider)).map((model) => ({
     value: `${model.provider}/${model.model}`,
-    label: `${PROVIDER_NAMES[model.provider] ?? model.provider} · ${model.label}`,
+    // Free models say so, so the owner can pick them knowingly.
+    label: `${PROVIDER_NAMES[model.provider] ?? model.provider} · ${model.label}${
+      model.free && !model.label.includes("(free)") ? " (free)" : ""
+    }`,
   }));
 }
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { setProjectArchived, updateProject } from "../../actions";
+import { ACCESS_LABELS, PROVIDER_CATALOG, PROVIDER_IDS } from "@nexus/model-gateway";
 import { ActionForm } from "@/components/ui/action-form";
 import { Hidden, SelectField, TextField, buttonSecondary } from "@/components/ui/fields";
 import { getProject } from "@/lib/projects/queries";
@@ -27,17 +28,7 @@ export default async function ProjectSettingsPage({
     getProjectModelSettings(projectId),
     projectSpentMicros(projectId),
   ]);
-  const allowed = new Set(
-    modelSettings?.allowed_providers ?? [
-      "anthropic",
-      "openai",
-      "gemini",
-      "xai",
-      "deepseek",
-      "groq",
-      "openrouter",
-    ],
-  );
+  const allowed = new Set(modelSettings?.allowed_providers ?? PROVIDER_IDS);
 
   return (
     <main id="main" className="max-w-xl space-y-10 p-6">
@@ -46,12 +37,6 @@ export default async function ProjectSettingsPage({
       <ActionForm action={updateProject} submitLabel="Save project" version={project.version}>
         <Hidden name="projectId" value={project.id} />
         <TextField name="name" label="Name" defaultValue={project.name} required maxLength={120} />
-        <TextField
-          name="clientName"
-          label="Client"
-          defaultValue={project.client_name}
-          maxLength={120}
-        />
         <TextField name="stack" label="Stack" defaultValue={project.stack} maxLength={200} />
         <TextField
           name="environments"
@@ -281,17 +266,7 @@ export default async function ProjectSettingsPage({
           </label>
           <fieldset className="space-y-1 text-sm">
             <legend className="mb-1 font-medium">Providers allowed</legend>
-            {(
-              [
-                ["anthropic", "Anthropic"],
-                ["openai", "OpenAI"],
-                ["gemini", "Gemini"],
-                ["xai", "xAI"],
-                ["deepseek", "DeepSeek"],
-                ["groq", "Groq"],
-                ["openrouter", "OpenRouter"],
-              ] as const
-            ).map(([value, label]) => (
+            {PROVIDER_CATALOG.map(({ id: value, label, access }) => (
               <label key={value} className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -300,6 +275,9 @@ export default async function ProjectSettingsPage({
                   defaultChecked={allowed.has(value)}
                 />
                 {label}
+                <span className={`text-xs ${access === "paid" ? "text-nx-muted" : "text-nx-ok"}`}>
+                  {ACCESS_LABELS[access]}
+                </span>
               </label>
             ))}
           </fieldset>

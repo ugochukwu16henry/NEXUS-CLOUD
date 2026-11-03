@@ -19,7 +19,7 @@ inputs:
     description: Database password.
     required: false
   workdir:
-    description: Directory holding the project's supabase/ folder ("." for Nexus Cloud, apps/hub-api for Nexus AI Hub).
+    description: Directory holding the project's supabase/ folder ("." for Nexus Cloud, the only database).
     default: "."
   runbook:
     description: Where the missing-secrets notice points.

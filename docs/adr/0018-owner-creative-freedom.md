@@ -18,7 +18,7 @@ Nexus Cloud exists so its owner can build whatever he imagines (software, apps, 
 - **The owner decides, always.** Approval steps (MFA on risk actions, approving deploys or agent commands) ask the owner. They never refuse him. He can change how often he's asked, per project.
 - **Nexus AI Hub's public rules are separate.** Moderation and age checks in the Hub apply to **public customers** (ADR 0015, threat model T28), never to the owner's own work in Nexus Cloud. Video, image and every other generation is included: the owner generates whatever he chooses, within section 2.
 
-### 1a. Third parties follow the owner's rules (added 2026-11-05)
+### 1a. Third parties follow the owner's rules (added 2026-11-05; withdrawn by [ADR 0020](0020-owner-only-platform.md): Nexus Cloud has no third parties)
 
 People who use the owner's platforms are **third parties**: Nexus AI Hub customers, invited clients, and later any team members. Unlike the owner, they work under a **content policy the owner controls**:
 

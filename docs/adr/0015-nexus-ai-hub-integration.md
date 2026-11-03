@@ -1,6 +1,6 @@
 # ADR 0015: Bring Nexus AI Hub (formerly Zentrix AI Hub) into the platform
 
-- **Status:** Accepted (2026-11-03)
+- **Status:** Superseded by [ADR 0020](0020-owner-only-platform.md) (owner-only platform, one database), 2026-11-03
 - **Date:** 2026-11-03
 - **Decider:** Henry Ugochukwu (owner)
 - **Sources:** _Zentrix AI Hub – Development Concept and Production Plan_ v1.0 (13 Oct 2026), _Zentrix AI Hub – Product Design_ ("Ink & Cobalt"), repository `ugochukwu16henry/Zentrix-AI-Hub` (Phase 0: commit `0a5a0d6`, plus `0d349d4` on branch `claude/gracious-brahmagupta-zsp0xu`, not yet merged)

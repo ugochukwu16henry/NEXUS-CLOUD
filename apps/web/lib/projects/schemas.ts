@@ -61,7 +61,6 @@ export const version = z.coerce.number().int().positive();
 
 export const projectFields = z.object({
   name: required(120, "Name"),
-  clientName: optionalText(120, "Client"),
   stack: optionalText(200, "Stack"),
   environments: list(10).pipe(
     z.array(
@@ -95,10 +94,6 @@ export const milestoneFields = z.object({
   criteria: trimmed(2000, "Criteria"),
   targetDate: optionalDate,
   status: z.enum(["planned", "in_progress", "done"]),
-  clientVisible: z
-    .string()
-    .optional()
-    .transform((value) => value === "on"),
 });
 
 export const taskFields = z.object({

@@ -17,19 +17,14 @@ export type ShellViewer = {
   workspaceName: string;
   mfa: "verified" | "enrolled" | "off";
   canReadAudit: boolean;
-  /** Shown the Business area; the page itself still asks for MFA. */
-  canReadBusiness: boolean;
 };
 
 type NavItem = { href: string; label: string } | { label: string; sprint: number };
 type NavGroup = { title: string; items: NavItem[] };
 
-/** Business is the Nexus AI Hub side (ADR 0015); Engineering is the agent cockpit. */
+/** The owner's workspace (ADR 0020): engineering, and later the media Studio. */
 function navGroups(viewer: ShellViewer): NavGroup[] {
   return [
-    ...(viewer.canReadBusiness
-      ? [{ title: "Business", items: [{ href: "/owner", label: "Owner dashboard" }] }]
-      : []),
     {
       title: "Engineering",
       items: [
@@ -39,8 +34,6 @@ function navGroups(viewer: ShellViewer): NavGroup[] {
         { href: "/agents", label: "Agents" },
         { label: "Tests", sprint: 7 },
         { label: "Deployments", sprint: 8 },
-        { label: "Client rooms", sprint: 9 },
-        { label: "Marketing", sprint: 11 },
       ],
     },
     {

@@ -18,14 +18,12 @@ describe("projectFields", () => {
     expect(
       projectFields.parse({
         name: "  Pilot ",
-        clientName: "",
         stack: "Next.js",
         environments: "dev, staging\nproduction",
         budgetUsd: "120.456",
       }),
     ).toEqual({
       name: "Pilot",
-      clientName: null,
       stack: "Next.js",
       environments: ["dev", "staging", "production"],
       budgetUsd: 120.46,
@@ -34,8 +32,7 @@ describe("projectFields", () => {
 
   it("treats an empty budget as zero", () => {
     expect(
-      projectFields.parse({ name: "x", clientName: "", stack: "", environments: "", budgetUsd: "" })
-        .budgetUsd,
+      projectFields.parse({ name: "x", stack: "", environments: "", budgetUsd: "" }).budgetUsd,
     ).toBe(0);
   });
 
@@ -50,7 +47,6 @@ describe("projectFields", () => {
   ])("rejects %j", (override, message) => {
     const result = projectFields.safeParse({
       name: "x",
-      clientName: "",
       stack: "",
       environments: "dev",
       budgetUsd: "1",
@@ -126,10 +122,9 @@ describe("taskMove", () => {
 });
 
 describe("milestoneFields", () => {
-  it("reads a checkbox as a boolean", () => {
+  it("parses a milestone", () => {
     const base = { title: "M1", criteria: "", targetDate: "2026-12-01", status: "planned" };
-    expect(milestoneFields.parse({ ...base, clientVisible: "on" }).clientVisible).toBe(true);
-    expect(milestoneFields.parse(base).clientVisible).toBe(false);
+    expect(milestoneFields.parse(base)).toMatchObject({ title: "M1", status: "planned" });
   });
 });
 

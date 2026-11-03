@@ -4,7 +4,6 @@
 - [Database migrations to hosted Supabase](database-deploy.md)
 - [Staging environment](staging.md)
 - [Turn on error reporting (Sentry)](sentry.md)
-- [Nexus AI Hub database](hub-database.md)
 - [Register the Nexus GitHub App](github-app.md)
 - [Model providers and the spend cap](models.md)
 - [Agents, the terminal and the sandbox](agents.md)

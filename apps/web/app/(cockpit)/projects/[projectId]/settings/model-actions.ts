@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { PROVIDER_IDS } from "@nexus/model-gateway";
 import { z } from "zod";
 import { defineAction } from "@/lib/actions";
 import { parseForm } from "@/lib/projects/parse";
@@ -8,15 +9,7 @@ import { id } from "@/lib/projects/schemas";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const PROVIDERS = [
-  "anthropic",
-  "openai",
-  "gemini",
-  "xai",
-  "deepseek",
-  "groq",
-  "openrouter",
-] as const;
+const PROVIDERS = PROVIDER_IDS;
 
 const usd = (label: string, max: number) =>
   z.coerce

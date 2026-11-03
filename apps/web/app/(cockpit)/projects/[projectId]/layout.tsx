@@ -23,9 +23,7 @@ export default async function ProjectLayout({
   return (
     <div className="flex min-h-full flex-col">
       <div className="space-y-1 px-4 pt-4 sm:px-6 sm:pt-5">
-        <p className="text-xs text-nx-muted">
-          Project{project.client_name ? ` · ${project.client_name}` : ""}
-        </p>
+        <p className="text-xs text-nx-muted">Project</p>
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-xl font-semibold">{project.name}</p>
           <Badge tone={status.tone}>{status.label}</Badge>

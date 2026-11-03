@@ -1,6 +1,6 @@
 # ADR 0011: Client visibility defaults and invite expiry
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0020](0020-owner-only-platform.md): there are no clients or invites
 - **Date:** 2026-11-02
 - **Decider:** Henry Ugochukwu (owner)
 

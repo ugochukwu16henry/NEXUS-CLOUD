@@ -40,6 +40,7 @@ export const serverEnvSchema = publicEnvSchema.extend({
   GEMINI_API_KEY: z.string().optional(),
   DEEPSEEK_API_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string().optional(),
+  CEREBRAS_API_KEY: z.string().optional(),
   /**
    * Local and end-to-end tests only. A recorded reply, with no provider call.
    * Ignored unless the Supabase URL is localhost.

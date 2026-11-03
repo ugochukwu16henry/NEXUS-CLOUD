@@ -22,7 +22,6 @@ export const createProject = defineAction(
       .insert({
         workspace_id: viewer!.workspaceId!,
         name: input.name,
-        client_name: input.clientName,
         stack: input.stack,
         environments: input.environments.length
           ? input.environments
@@ -49,7 +48,6 @@ export const updateProject = defineAction(
     const supabase = await createSupabaseServerClient();
     const result = await updateVersioned(supabase, "projects", input.projectId, input.version, {
       name: input.name,
-      client_name: input.clientName,
       stack: input.stack,
       environments: input.environments,
       budget_usd: input.budgetUsd,

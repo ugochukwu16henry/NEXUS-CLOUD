@@ -10,7 +10,7 @@
  */
 
 export type ProviderId =
-  "xai" | "groq" | "anthropic" | "openai" | "gemini" | "deepseek" | "openrouter";
+  "xai" | "groq" | "anthropic" | "openai" | "gemini" | "deepseek" | "openrouter" | "cerebras";
 export type Zone = "staff" | "customer";
 
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
@@ -26,7 +26,7 @@ export type TextResult = {
   text: string;
   inputTokens: number;
   outputTokens: number;
-  /** What the provider charged, in millionths of a US dollar (the unit `@nexus/money` uses). */
+  /** What the provider charged, in millionths of a US dollar (the unit the whole platform uses). */
   costUsdMicros: number;
   providerRequestId: string | null;
 };

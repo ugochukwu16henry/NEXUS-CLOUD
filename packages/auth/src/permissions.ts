@@ -1,8 +1,11 @@
 /**
- * Role-based permissions (Sprint 1). Every server-side check goes through `authorize`, and RLS in
- * Postgres enforces the same boundaries again (defence in depth, threat model T02).
+ * Permissions (Sprint 1; owner-only since ADR 0020). Nexus Cloud has one user, the owner: there
+ * are no client, viewer or customer accounts. Every server-side check still goes through
+ * `authorize`, which also asks for the second factor on risk actions, and RLS in Postgres enforces
+ * the workspace boundary again (defence in depth, threat model T02). The database's role type keeps
+ * its old values, but the app treats any membership that isn't the owner's as no access.
  */
-export const ROLES = ["owner", "client", "viewer"] as const;
+export const ROLES = ["owner"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const PERMISSIONS = [
@@ -12,12 +15,9 @@ export const PERMISSIONS = [
   "task:approve",
   "requirement:approve",
   "audit:read",
-  "member:manage",
   "settings:update",
   "profile:update",
   "session:revoke_all",
-  /** The Owner Dashboard: Nexus AI Hub customers, revenue and provider bills (ADR 0015). */
-  "business:read",
   /** Install or change the GitHub App, retry webhook deliveries (Sprint 3). */
   "integration:manage",
   /** Raise a spend cap or lift a hard stop (Sprint 5). */
@@ -29,8 +29,6 @@ export type Permission = (typeof PERMISSIONS)[number];
 
 const GRANTS: Record<Role, ReadonlySet<Permission>> = {
   owner: new Set(PERMISSIONS),
-  client: new Set(["workspace:read", "project:read", "profile:update", "session:revoke_all"]),
-  viewer: new Set(["workspace:read", "project:read", "profile:update", "session:revoke_all"]),
 };
 
 /**
@@ -40,10 +38,7 @@ const GRANTS: Record<Role, ReadonlySet<Permission>> = {
  */
 export const RISK_PERMISSIONS: ReadonlySet<Permission> = new Set([
   "task:approve",
-  "member:manage",
   "session:revoke_all",
-  // Customer personal data and company finances: the Hub plan requires two-step sign-in for them.
-  "business:read",
   // Connecting GitHub grants Nexus write access to repositories.
   "integration:manage",
   // Raising a cap or lifting a hard stop lets models keep spending.

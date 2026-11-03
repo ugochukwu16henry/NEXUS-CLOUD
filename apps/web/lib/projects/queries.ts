@@ -19,7 +19,7 @@ export async function listProjects() {
   const [{ data: projects }, { data: tasks }] = await Promise.all([
     supabase
       .from("projects")
-      .select("id, name, client_name, status, archived_at, budget_usd, updated_at")
+      .select("id, name, status, archived_at, budget_usd, updated_at")
       .order("archived_at", { ascending: true, nullsFirst: true })
       .order("updated_at", { ascending: false }),
     supabase.from("tasks").select("project_id, state"),
@@ -121,7 +121,7 @@ export const getMilestones = cache(async (projectId: string) => {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("milestones")
-    .select("id, title, criteria, target_date, status, client_visible, version")
+    .select("id, title, criteria, target_date, status, version")
     .eq("project_id", projectId)
     .order("target_date", { ascending: true, nullsFirst: false });
   return data ?? [];

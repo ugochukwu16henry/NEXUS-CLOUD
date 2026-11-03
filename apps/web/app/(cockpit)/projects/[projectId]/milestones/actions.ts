@@ -22,7 +22,6 @@ export const createMilestone = defineAction(
         criteria: input.criteria,
         target_date: input.targetDate,
         status: input.status,
-        client_visible: input.clientVisible,
       })
       .select("id")
       .single();
@@ -51,7 +50,6 @@ export const updateMilestone = defineAction(
       criteria: input.criteria,
       target_date: input.targetDate,
       status: input.status,
-      client_visible: input.clientVisible,
     });
     const audit = {
       projectId: input.projectId,

@@ -135,3 +135,36 @@ test.describe("routing round a declined request", () => {
     await expectAccessible(page);
   });
 });
+
+// Free and open providers: the owner sees which are free, which are a trial, and which keys are
+// missing; each project can allow or block them.
+test.describe("provider catalog", () => {
+  test.beforeEach(async ({ page }) => {
+    await signIn(page);
+  });
+
+  test("Settings → Models marks free, trial and paid providers and missing keys", async ({
+    page,
+  }) => {
+    await page.goto("/settings/models");
+    const providers = page.getByRole("list", { name: "Providers" });
+    const openrouter = providers
+      .getByRole("listitem")
+      .filter({ has: page.getByText("OpenRouter", { exact: true }) });
+    await expect(openrouter).toContainText("Free tier");
+    await expect(openrouter).toContainText("Not set: add OPENROUTER_API_KEY");
+    await expect(openrouter).toContainText("free.");
+    await expect(
+      providers.getByRole("listitem").filter({ has: page.getByText("Cerebras", { exact: true }) }),
+    ).toContainText("Free trial");
+    await expect(
+      providers.getByRole("listitem").filter({ has: page.getByText("Anthropic", { exact: true }) }),
+    ).toContainText("Paid");
+    await expectAccessible(page);
+
+    await page.goto(`${projectUrl}/settings`);
+    const allowed = page.getByRole("group", { name: "Providers allowed" });
+    await expect(allowed.getByRole("checkbox", { name: /Cerebras/ })).toBeChecked();
+    await expect(allowed.getByText("Free trial")).toBeVisible();
+  });
+});

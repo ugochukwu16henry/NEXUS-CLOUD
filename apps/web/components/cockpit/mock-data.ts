@@ -37,7 +37,12 @@ export const BOARD: { id: string; title: string; state: WorkflowState; owner: st
   { id: "NX-12", title: "Password reset flow", state: "needs_human_review", owner: "Coding agent" },
   { id: "NX-13", title: "Reset E2E journey", state: "automated_checks", owner: "Test agent" },
   { id: "NX-14", title: "Rate-limit reset endpoint", state: "blocked", owner: "Security agent" },
-  { id: "NX-15", title: "Client update: auth milestone", state: "ready", owner: "Client reporter" },
+  {
+    id: "NX-15",
+    title: "Release notes: auth milestone",
+    state: "ready",
+    owner: "Release notes agent",
+  },
 ];
 
 export const AGENT_RUN = {

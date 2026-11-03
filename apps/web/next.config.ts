@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
     "@nexus/core",
     "@nexus/config",
     "@nexus/integrations",
-    "@nexus/money",
     "@nexus/observability",
   ],
   poweredByHeader: false,
