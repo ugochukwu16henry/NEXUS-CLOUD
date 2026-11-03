@@ -496,6 +496,7 @@ SPRINTS = [
              "Usage ledger: provider, model, tokens/media units, task, run, cost estimate, currency + FX rate, timestamp.",
              "Budget guard: per-run, per-project, global caps; warnings at 50/75/90 %; hard stop at 100 % until owner extends; expensive-action prompt (large context, long loops).",
              "Fallback policy: switch model only if allowed by project privacy settings; the switch is displayed and logged.",
+             "Owner freedom (ADR 0018): one-click \"try another provider\" when a provider declines, is down or too costly; owner-configured fallback chains; a refusal is shown as that provider's decision with alternatives, never as Nexus forbidding the work.",
              "Run the provider benchmark suite and record scores in the provider register.",
              "Images as model input (ADR 0016): adapters declare a vision capability; the gateway sends attached pictures only to models that have it and counts them in usage and budget.",
          ],

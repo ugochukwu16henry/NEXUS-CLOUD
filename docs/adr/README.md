@@ -19,5 +19,6 @@
 | [0015](0015-nexus-ai-hub-integration.md)     | Bring Nexus AI Hub into the platform                             |
 | [0016](0016-uploads-terminal-agent-panel.md) | Uploads, terminal and agent panel in the workspace               |
 | [0017](0017-changesets-before-sandbox.md)    | Change sets on GitHub before the sandbox exists (and CodeMirror) |
+| [0018](0018-owner-creative-freedom.md)       | The owner's creative freedom: no limits on what the owner builds |
 
 New ADRs copy the format of an existing one and take the next number. Superseded ADRs keep their file and change status.
