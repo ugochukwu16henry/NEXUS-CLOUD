@@ -11,16 +11,21 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@nexus/agents": "workspace:*",
     "@nexus/config": "workspace:*",
     "@nexus/core": "workspace:*",
     "@nexus/db": "workspace:*",
     "@nexus/integrations": "workspace:*",
+    "@nexus/model-gateway": "workspace:*",
     "@nexus/observability": "workspace:*",
+    "@nexus/workspace": "workspace:*",
     "@sentry/node": "^11.9.0",
-    "@supabase/supabase-js": "^2.118.0"
+    "@supabase/supabase-js": "^2.118.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",
+    "@types/ws": "^8.18.1",
     "esbuild": "^0.28.2",
     "tsx": "^4.23.15"
   }

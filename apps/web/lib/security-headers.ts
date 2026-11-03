@@ -6,9 +6,11 @@ export type CspOptions = {
   nonce: string;
   isDev: boolean;
   supabaseUrl: string;
+  /** Origin of the worker terminal gateway, when one is configured. */
+  workerOrigin?: string;
 };
 
-export function buildCsp({ nonce, isDev, supabaseUrl }: CspOptions): string {
+export function buildCsp({ nonce, isDev, supabaseUrl, workerOrigin }: CspOptions): string {
   const supabaseOrigin = new URL(supabaseUrl).origin;
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
@@ -27,7 +29,12 @@ export function buildCsp({ nonce, isDev, supabaseUrl }: CspOptions): string {
     "font-src": ["'self'"],
     // Sessions never leave the server (HttpOnly, ADR 0013). The one direct call is an upload to a
     // single-object signed URL in Supabase Storage (ADR 0017).
-    "connect-src": ["'self'", supabaseOrigin, ...(isDev ? ["ws:"] : [])],
+    "connect-src": [
+      "'self'",
+      supabaseOrigin,
+      ...(workerOrigin ? [workerOrigin] : []),
+      ...(isDev ? ["ws:"] : []),
+    ],
     "frame-ancestors": ["'none'"],
     "base-uri": ["'self'"],
     "object-src": ["'none'"],

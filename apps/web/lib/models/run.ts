@@ -4,20 +4,15 @@ import {
   BudgetExceededError,
   ExpensiveActionRequiredError,
   LISTED_MODELS,
-  PROVISIONAL_FALLBACKS,
   ProviderDeclinedError,
-  PROVISIONAL_ROUTES,
   RouteBlockedError,
   SchemaError,
   UnknownModelError,
   VisionUnsupportedError,
-  createAnthropicAdapter,
-  createOpenAiAdapter,
-  createTemplateAdapter,
-  createStaffGateway,
-  usdToMicros,
+  adaptersFromKeys,
+  createFixtureAdapter,
+  createProjectGateway,
   type LedgerUsage,
-  type ProviderId,
   type RouteChoice,
   type StaffAdapter,
   type TaskKind,
@@ -31,60 +26,17 @@ import { allowFixtureMode } from "./fixture-mode";
 type Provider = Database["public"]["Enums"]["model_provider"];
 type Settings = Database["public"]["Tables"]["project_model_settings"]["Row"];
 
-const FIXTURE_PRICE = {
-  inputUsdMicrosPerMillion: 1_000_000,
-  outputUsdMicrosPerMillion: 0,
-  cachedInputUsdMicrosPerMillion: 0,
-  vision: true,
-};
-
-/**
- * One recorded call costs $0.01, so a $0.02 project budget warns and then stops. The Anthropic
- * fixture declines any prompt containing "fixture: decline", to test routing round a refusal.
- */
-function fixtureAdapter(id: ProviderId): StaffAdapter {
-  return {
-    id,
-    capabilities: { vision: true, tools: false, structuredOutput: true },
-    price: () => FIXTURE_PRICE,
-    quote: () => ({ estimatedUsdMicros: 10_000, inputTokens: 10_000, imageCount: 0 }),
-    async complete(request) {
-      const prompt = JSON.stringify(request.messages);
-      return {
-        declined: id === "anthropic" && prompt.includes("fixture: decline"),
-        text: `Recorded reply from ${id}.`,
-        toolCalls: [],
-        usage: { inputTokens: 10_000, outputTokens: 0, cachedTokens: 0, imageCount: 0 },
-        providerRequestId: null,
-      };
-    },
-  };
-}
-
 function liveAdapters(): StaffAdapter[] {
   const env = getServerEnv();
   if (allowFixtureMode(env.NEXUS_MODEL_FIXTURE, env.NEXT_PUBLIC_SUPABASE_URL)) {
-    return [fixtureAdapter("anthropic"), fixtureAdapter("openai")];
+    return [createFixtureAdapter("anthropic"), createFixtureAdapter("openai")];
   }
-  const adapters: StaffAdapter[] = [];
-  if (env.ANTHROPIC_API_KEY)
-    adapters.push(createAnthropicAdapter({ apiKey: env.ANTHROPIC_API_KEY }));
-  if (env.OPENAI_API_KEY) adapters.push(createOpenAiAdapter({ apiKey: env.OPENAI_API_KEY }));
-  if (env.XAI_API_KEY)
-    adapters.push(createTemplateAdapter({ provider: "xai", apiKey: env.XAI_API_KEY }));
-  if (env.GROQ_API_KEY) {
-    adapters.push(createTemplateAdapter({ provider: "groq", apiKey: env.GROQ_API_KEY }));
-  }
-  return adapters;
+  return adaptersFromKeys(env);
 }
 
 function monthStart(): string {
   const now = new Date();
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
-}
-
-function stillExtended(until: string | null): boolean {
-  return until !== null && new Date(until).getTime() > Date.now();
 }
 
 const PROVIDER_NAMES: Record<string, string> = {
@@ -216,35 +168,14 @@ export async function runModelPrompt(input: {
   if (!settings) return { status: "error", message: "This project has no model settings yet." };
   if (routeRows.error) return { status: "error", message: "The model routes could not be read." };
 
-  const routes = { ...PROVISIONAL_ROUTES } as Record<TaskKind, RouteChoice>;
-  for (const row of routeRows.data ?? []) {
-    routes[row.task_kind] = { provider: row.provider, model: row.model };
-  }
-
   const attempts: LedgerUsage[] = [];
-  const gateway = createStaffGateway({
+  const gateway = createProjectGateway({
     adapters,
-    routes,
-    fallbacks: [...PROVISIONAL_FALLBACKS],
-    allowed: new Set(settings.allowed_providers),
-    allowFallback: settings.allow_fallback,
-    budget: {
-      run: {
-        spentUsdMicros: 0,
-        limitUsdMicros: usdToMicros(Number(settings.run_budget_usd)),
-        extended: false,
-      },
-      project: {
-        spentUsdMicros: projectSpent,
-        limitUsdMicros: usdToMicros(Number(settings.monthly_budget_usd)),
-        extended: stillExtended(settings.extended_until),
-      },
-      global: {
-        spentUsdMicros: globalSpent,
-        limitUsdMicros: usdToMicros(Number(cap.data.monthly_usd)),
-        extended: stillExtended(cap.data.extended_until),
-      },
-    },
+    settings,
+    cap: cap.data,
+    projectSpentUsdMicros: projectSpent,
+    globalSpentUsdMicros: globalSpent,
+    routeRows: routeRows.data ?? [],
     onUsage: (record) => void attempts.push(record),
   });
 

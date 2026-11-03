@@ -6,29 +6,30 @@ A personal AI-powered software engineering cloud: one dark cockpit that coordina
 
 This repository also holds **Nexus AI Hub** (formerly Zentrix AI Hub), the public product: pay-as-you-go AI video, images, coding help and study help in Naira. It lives in a separate customer zone with its own database and keys ([ADR 0015](docs/adr/0015-nexus-ai-hub-integration.md)). Both are products of Zentrix Software Solutions.
 
-**Status:** Sprint 5 (model gateway, Anthropic and OpenAI adapters, usage ledger, budget guard) in place. Live benchmark scores are not recorded yet: no provider account is funded. Sprint 4 added the code workspace. See the [plan](docs/plan/Nexus_Cloud_Structure_Sprint_and_Test_Plan.pdf).
+**Status:** Sprint 6 (agent queue, planner and coder, terminal tickets, sandbox limits) in place. The golden-set acceptance rate is not recorded: no provider account is funded. Sprint 5 added the model gateway. See the [plan](docs/plan/Nexus_Cloud_Structure_Sprint_and_Test_Plan.pdf).
 
 ## Repository layout
 
-| Path                     | What it is                                                                        |
-| ------------------------ | --------------------------------------------------------------------------------- |
-| `apps/web`               | Next.js cockpit: sign-in, MFA, projects, board, audit; Owner Dashboard at /owner  |
-| `apps/hub-api`           | Nexus AI Hub API (NestJS): wallet, ledger, pricing, Paystack; its own database    |
-| `apps/worker`            | Queue consumer for agent runs, builds, tests and scans (heartbeat until Sprint 6) |
-| `packages/core`          | Domain types and the workflow state machine                                       |
-| `packages/auth`          | Roles, permissions and the MFA rule for risk actions                              |
-| `packages/audit`         | Audit event validation and writer                                                 |
-| `packages/observability` | JSON logger with secret redaction                                                 |
-| `packages/db`            | Database types generated from the migrations                                      |
-| `packages/config`        | Environment schema; keeps server-only variables out of the browser                |
-| `packages/integrations`  | GitHub App client, webhook verification and processing, task links                |
-| `packages/workspace`     | Path guard, upload checks, secret scan, diff, branch and commit rules, edit lock  |
-| `packages/money`         | Kobo, exchange rates, VAT and margins, shared by both products                    |
-| `packages/model-gateway` | Routing, pricing, budget guard and provider adapters; one gateway per zone        |
-| `packages/ui`            | Design tokens: dark Console theme and Ink & Cobalt Hub theme                      |
-| `supabase/`              | Migrations, seed data and pgTAP policy tests                                      |
-| `tests/e2e`              | Playwright journeys with axe accessibility checks                                 |
-| `docs/`                  | ADRs, requirements, threat model, provider register, runbooks, plan               |
+| Path                     | What it is                                                                       |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| `apps/web`               | Next.js cockpit: sign-in, MFA, projects, board, audit; Owner Dashboard at /owner |
+| `apps/hub-api`           | Nexus AI Hub API (NestJS): wallet, ledger, pricing, Paystack; its own database   |
+| `apps/worker`            | Queue consumer for agent runs and the terminal gateway (pg-boss, sandbox)        |
+| `packages/core`          | Domain types and the workflow state machine                                      |
+| `packages/auth`          | Roles, permissions and the MFA rule for risk actions                             |
+| `packages/audit`         | Audit event validation and writer                                                |
+| `packages/observability` | JSON logger with secret redaction                                                |
+| `packages/db`            | Database types generated from the migrations                                     |
+| `packages/config`        | Environment schema; keeps server-only variables out of the browser               |
+| `packages/integrations`  | GitHub App client, webhook verification and processing, task links               |
+| `packages/workspace`     | Path guard, upload checks, secret scan, diff, branch and commit rules, edit lock |
+| `packages/money`         | Kobo, exchange rates, VAT and margins, shared by both products                   |
+| `packages/model-gateway` | Routing, pricing, budget guard and provider adapters; one gateway per zone       |
+| `packages/agents`        | Agent contract, command policy, queue, sandbox limits and terminal tickets       |
+| `packages/ui`            | Design tokens: dark Console theme and Ink & Cobalt Hub theme                     |
+| `supabase/`              | Migrations, seed data and pgTAP policy tests                                     |
+| `tests/e2e`              | Playwright journeys with axe accessibility checks                                |
+| `docs/`                  | ADRs, requirements, threat model, provider register, runbooks, plan              |
 
 ## Getting started
 

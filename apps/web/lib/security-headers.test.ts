@@ -20,6 +20,16 @@ describe("buildCsp", () => {
     expect(prod).toMatch(/connect-src 'self' https:\/\/x\.supabase\.co(;|$)/);
   });
 
+  it("allows the worker terminal origin when one is configured", () => {
+    const csp = buildCsp({
+      nonce: "n",
+      isDev: false,
+      supabaseUrl: "https://x.supabase.co",
+      workerOrigin: "wss://worker.example",
+    });
+    expect(csp).toContain("wss://worker.example");
+  });
+
   it("allows eval and websockets only in development", () => {
     const dev = buildCsp({ nonce: "n", isDev: true, supabaseUrl: "http://127.0.0.1:54321" });
     expect(dev).toContain("'unsafe-eval'");

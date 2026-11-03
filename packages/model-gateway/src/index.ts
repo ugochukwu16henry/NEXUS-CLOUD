@@ -12,3 +12,4 @@ export * from "./benchmark";
 export { createOpenAiAdapter, collectOpenAiStream } from "./adapters/openai";
 export { createAnthropicAdapter } from "./adapters/anthropic";
 export { ADAPTER_TEMPLATE, createTemplateAdapter } from "./adapters/template";
+export * from "./project";

@@ -20,5 +20,6 @@
 | [0016](0016-uploads-terminal-agent-panel.md) | Uploads, terminal and agent panel in the workspace               |
 | [0017](0017-changesets-before-sandbox.md)    | Change sets on GitHub before the sandbox exists (and CodeMirror) |
 | [0018](0018-owner-creative-freedom.md)       | The owner's creative freedom: no limits on what the owner builds |
+| [0019](0019-sandbox-drivers.md)              | Sandbox drivers: managed microVMs in production, Docker locally  |
 
 New ADRs copy the format of an existing one and take the next number. Superseded ADRs keep their file and change status.

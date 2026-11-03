@@ -3,9 +3,12 @@
 import { WORKFLOW_STATES } from "@nexus/core";
 import type { Database } from "@nexus/db";
 import { processDueDeliveries } from "@nexus/integrations";
+import { createClient } from "@supabase/supabase-js";
 import { createLogger, redact } from "@nexus/observability";
 import * as Sentry from "@sentry/node";
-import { createClient } from "@supabase/supabase-js";
+import { AGENT_QUEUE, startBoss, type AgentJob } from "@nexus/agents/boss";
+import { processAgentJob } from "./jobs";
+import { startTerminalGateway } from "./terminal";
 
 const HEARTBEAT_MS = 30_000;
 const WEBHOOK_POLL_MS = 15_000;
@@ -58,6 +61,27 @@ if (supabaseUrl && secretKey) {
         running = false;
       });
   }, WEBHOOK_POLL_MS);
+
+  const port = Number(process.env.WORKER_PORT ?? 8787);
+  startTerminalGateway(db, port);
+  logger.info("terminal gateway listening", { port });
+
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl) {
+    startBoss(databaseUrl)
+      .then((boss) =>
+        boss.work<AgentJob>(AGENT_QUEUE, async (jobs) => {
+          for (const job of jobs) await processAgentJob(db, job.data);
+        }),
+      )
+      .then(() => logger.info("agent queue started"))
+      .catch((error: unknown) => {
+        logger.error("agent queue failed to start", { error });
+        Sentry.captureException(error);
+      });
+  } else {
+    logger.warn("DATABASE_URL missing; agent queue is off");
+  }
 } else {
   logger.warn("Supabase environment missing; webhook retries are off");
 }

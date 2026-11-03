@@ -100,8 +100,8 @@ export default async function ProjectSettingsPage({
           Workspace
         </h2>
         <p className="text-sm text-nx-muted">
-          Limits for uploading files and folders into the code, and for attachments on tasks.
-          Sandbox, terminal and agent settings arrive with Sprint 6.
+          Limits for uploads, the sandbox, the terminal and agent approvals. Secrets are not typed
+          here.
         </p>
         <ActionForm action={updateWorkspaceSettings} submitLabel="Save workspace settings">
           <Hidden name="projectId" value={project.id} />
@@ -161,6 +161,84 @@ export default async function ProjectSettingsPage({
             hint="Comma-separated, matched at any depth. They are listed as skipped, never uploaded."
             defaultValue={limits.skipFolders.join(", ")}
             maxLength={1000}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              name="nodeMajor"
+              label="Node version"
+              type="number"
+              defaultValue={limits.nodeMajor}
+              required
+            />
+            <TextField
+              name="agentMaxIterations"
+              label="Agent iteration cap"
+              type="number"
+              defaultValue={limits.agentMaxIterations}
+              required
+            />
+            <TextField
+              name="installCommand"
+              label="Install command"
+              defaultValue={limits.installCommand}
+              required
+            />
+            <TextField
+              name="testCommand"
+              label="Test command"
+              defaultValue={limits.testCommand}
+              required
+            />
+            <TextField
+              name="buildCommand"
+              label="Build command"
+              defaultValue={limits.buildCommand}
+              required
+            />
+            <TextField
+              name="startCommand"
+              label="Start command"
+              defaultValue={limits.startCommand}
+              required
+            />
+            <TextField
+              name="terminalIdleSeconds"
+              label="Terminal idle timeout (seconds)"
+              type="number"
+              defaultValue={limits.terminalIdleSeconds}
+              required
+            />
+            <TextField
+              name="terminalMaxSessions"
+              label="Open terminals"
+              type="number"
+              defaultValue={limits.terminalMaxSessions}
+              required
+            />
+          </div>
+          <label className="block space-y-1 text-sm">
+            <span className="font-medium">Command approval</span>
+            <select
+              name="approvalMode"
+              defaultValue={limits.approvalMode}
+              className="w-full rounded-md border border-nx-border bg-nx-bg px-3 py-2"
+            >
+              <option value="safe_list">Safe list (install, test, read-only git)</option>
+              <option value="ask">Ask every time</option>
+              <option value="custom">Custom list</option>
+            </select>
+          </label>
+          <TextField
+            name="customCommands"
+            label="Custom commands"
+            hint="One command per line. Used when approval is set to custom. The denylist still refuses them."
+            defaultValue={limits.customCommands.join("\n")}
+          />
+          <TextField
+            name="plainEnv"
+            label="Non-secret environment variables"
+            hint="NAME=value, one per line. Names containing SECRET, TOKEN, PASSWORD, KEY or CREDENTIAL are rejected."
+            defaultValue={limits.plainEnv}
           />
         </ActionForm>
       </section>

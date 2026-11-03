@@ -59,9 +59,23 @@ export async function openWorkspace(
   };
 }
 
-export async function getWorkspaceLimits(
-  projectId: string,
-): Promise<UploadLimits & { attachmentMaxMb: number; attachmentKinds: string[] }> {
+export async function getWorkspaceLimits(projectId: string): Promise<
+  UploadLimits & {
+    attachmentMaxMb: number;
+    attachmentKinds: string[];
+    nodeMajor: number;
+    installCommand: string;
+    testCommand: string;
+    buildCommand: string;
+    startCommand: string;
+    terminalIdleSeconds: number;
+    terminalMaxSessions: number;
+    approvalMode: string;
+    customCommands: string[];
+    agentMaxIterations: number;
+    plainEnv: string;
+  }
+> {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("workspace_settings")
@@ -75,7 +89,26 @@ export async function getWorkspaceLimits(
     skipFolders: data?.skip_folders ?? DEFAULT_LIMITS.skipFolders,
     attachmentMaxMb: data?.attachment_max_mb ?? 20,
     attachmentKinds: data?.attachment_kinds ?? ["image", "pdf", "text"],
+    nodeMajor: data?.node_major ?? 24,
+    installCommand: data?.install_command ?? "pnpm install",
+    testCommand: data?.test_command ?? "pnpm test",
+    buildCommand: data?.build_command ?? "pnpm build",
+    startCommand: data?.start_command ?? "pnpm dev",
+    terminalIdleSeconds: data?.terminal_idle_seconds ?? 900,
+    terminalMaxSessions: data?.terminal_max_sessions ?? 3,
+    approvalMode: data?.approval_mode ?? "safe_list",
+    customCommands: data?.custom_commands ?? [],
+    agentMaxIterations: data?.agent_max_iterations ?? 8,
+    plainEnv: formatPlainEnv(data?.plain_env),
   };
+}
+
+function formatPlainEnv(value: unknown): string {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "";
+  return Object.entries(value)
+    .filter((entry): entry is [string, string] => typeof entry[1] === "string")
+    .map(([key, item]) => `${key}=${item}`)
+    .join("\n");
 }
 
 /** The task's open change set, if any (RLS: owner only). */

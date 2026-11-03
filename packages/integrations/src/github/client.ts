@@ -301,6 +301,47 @@ export class GitHubClient {
     return new Uint8Array(Buffer.from(str(data.content).replace(/\n/g, ""), "base64"));
   }
 
+  /**
+   * The repository at a commit as one gzipped tar (one top-level folder). GitHub redirects to
+   * codeload with a short-lived URL, so the token is not sent past the first hop.
+   */
+  async getTarball(
+    token: string,
+    fullName: string,
+    ref: string,
+    maxBytes = 200 * 1024 * 1024,
+  ): Promise<Uint8Array> {
+    const url = `${this.config.apiUrl.replace(/\/$/, "")}/repos/${fullName}/tarball/${encodeURIComponent(ref)}`;
+    let response: Response;
+    try {
+      response = await this.fetchImpl(url, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "User-Agent": "nexus-cloud",
+          Authorization: `Bearer ${token}`,
+        },
+        redirect: "follow",
+        signal: AbortSignal.timeout(Math.max(this.config.timeoutMs ?? 15_000, 120_000)),
+      });
+    } catch {
+      throw new GitHubError("GitHub GET tarball could not reach GitHub", 0, true);
+    }
+    if (!response.ok) {
+      throw new GitHubError(
+        `GitHub GET tarball failed with status ${response.status}`,
+        response.status,
+        response.status >= 500,
+      );
+    }
+    const length = Number(response.headers.get("content-length") ?? 0);
+    if (length > maxBytes) throw new GitHubError("GitHub GET tarball is too large", 413, false);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.length > maxBytes)
+      throw new GitHubError("GitHub GET tarball is too large", 413, false);
+    return bytes;
+  }
+
   async createBlob(token: string, fullName: string, content: Uint8Array): Promise<string> {
     const data = await this.request("POST", `/repos/${fullName}/git/blobs`, {
       auth: `Bearer ${token}`,

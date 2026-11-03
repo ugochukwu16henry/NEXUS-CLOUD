@@ -2,9 +2,11 @@ import type { TreeEntry } from "@nexus/integrations";
 import { detectContent, diffText, type FileDiff } from "@nexus/workspace";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AgentPanel } from "@/components/code/agent-panel";
 import { CodeEditor } from "@/components/code/code-editor";
 import { DiffView } from "@/components/code/diff-view";
 import { Explorer, type ExplorerFile } from "@/components/code/explorer";
+import { TerminalPanel } from "@/components/code/terminal-panel";
 import { UploadPanel } from "@/components/code/upload-panel";
 import { ActionForm } from "@/components/ui/action-form";
 import { buttonSecondary } from "@/components/ui/fields";
@@ -30,6 +32,7 @@ import {
   revertLatest,
   startWork,
 } from "./actions";
+import { startTerminal } from "../agent-actions";
 
 export const metadata: Metadata = { title: "Code · Nexus Cloud" };
 
@@ -287,7 +290,8 @@ export default async function CodePage({
         </aside>
 
         {/* ---------------------------------------------------------------- editor / diff */}
-        <section aria-label="Editor" className="flex min-h-0 flex-col">
+        {/* The editor keeps a usable height; the agent and terminal panels scroll in below it. */}
+        <section aria-label="Editor" className="flex min-h-0 flex-col overflow-y-auto">
           {selected ? (
             <>
               <div className="flex items-center gap-3 border-b border-nx-border px-3 py-1.5 text-sm">
@@ -311,7 +315,7 @@ export default async function CodePage({
                   </nav>
                 )}
               </div>
-              <div className="min-h-0 flex-1 overflow-auto">
+              <div className="min-h-[18rem] flex-1 overflow-auto">
                 {view === "diff" && selected.diff ? (
                   <DiffView path={selected.path} diff={selected.diff} />
                 ) : selected.text !== null &&
@@ -492,6 +496,19 @@ export default async function CodePage({
                 </ActionForm>
               </details>
             </div>
+          )}
+          {task && (
+            <div className="border-t border-nx-border px-4 py-3">
+              <AgentPanel projectId={project.id} taskId={task.id} />
+            </div>
+          )}
+          {task && (
+            <TerminalPanel
+              action={startTerminal}
+              projectId={project.id}
+              taskId={task.id}
+              workerUrl={process.env.WORKER_WS_URL ?? null}
+            />
           )}
         </section>
       </div>

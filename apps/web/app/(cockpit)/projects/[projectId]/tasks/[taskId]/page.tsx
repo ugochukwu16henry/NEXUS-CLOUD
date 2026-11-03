@@ -7,6 +7,7 @@ import { TaskFields } from "@/components/projects/task-fields";
 import { ActionForm } from "@/components/ui/action-form";
 import { Badge, Hidden, SelectField, buttonSecondary } from "@/components/ui/fields";
 import { AttachmentsPanel } from "@/components/code/attachments-panel";
+import { AgentPanel } from "@/components/code/agent-panel";
 import { getTaskLinks } from "@/lib/github/repository";
 import { listTaskAttachments } from "@/lib/workspace/attachments";
 import { getWorkspaceLimits } from "@/lib/workspace/server";
@@ -59,6 +60,7 @@ export default async function TaskPage({
             milestones={milestones.map((m) => ({ id: m.id, label: m.title }))}
           />
         </ActionForm>
+        <AgentPanel projectId={projectId} taskId={task.id} />
       </div>
 
       <aside className="space-y-8" aria-label="Task status and dependencies">

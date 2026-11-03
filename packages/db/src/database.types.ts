@@ -9,47 +9,186 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agent_events: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          project_id: string
+          run_id: string
+          summary: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          project_id: string
+          run_id: string
+          summary: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          project_id?: string
+          run_id?: string
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_runs: {
+        Row: {
+          budget_usd_micros: number
+          created_at: string
+          created_by: string | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          idempotency_key: string
+          iteration: number
+          kind: Database["public"]["Enums"]["agent_kind"]
+          max_iterations: number
+          project_id: string
+          purpose: string
+          spent_usd_micros: number
+          started_at: string | null
+          state: Json | null
+          status: Database["public"]["Enums"]["agent_run_status"]
+          stop_condition: string
+          task_id: string
+        }
+        Insert: {
+          budget_usd_micros: number
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          idempotency_key: string
+          iteration?: number
+          kind: Database["public"]["Enums"]["agent_kind"]
+          max_iterations: number
+          project_id: string
+          purpose: string
+          spent_usd_micros?: number
+          started_at?: string | null
+          state?: Json | null
+          status?: Database["public"]["Enums"]["agent_run_status"]
+          stop_condition: string
+          task_id: string
+        }
+        Update: {
+          budget_usd_micros?: number
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          idempotency_key?: string
+          iteration?: number
+          kind?: Database["public"]["Enums"]["agent_kind"]
+          max_iterations?: number
+          project_id?: string
+          purpose?: string
+          spent_usd_micros?: number
+          started_at?: string | null
+          state?: Json | null
+          status?: Database["public"]["Enums"]["agent_run_status"]
+          stop_condition?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_runs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artifacts: {
         Row: {
+          agent_run_id: string | null
+          approval: Database["public"]["Enums"]["artifact_approval"]
           content_type: string
           created_at: string
           filename: string
           id: string
           kind: Database["public"]["Enums"]["artifact_kind"]
           project_id: string
+          retain_until: string | null
           sha256: string
           size_bytes: number
           storage_key: string
           task_id: string | null
           uploaded_by: string | null
+          visibility: Database["public"]["Enums"]["artifact_visibility"]
         }
         Insert: {
+          agent_run_id?: string | null
+          approval?: Database["public"]["Enums"]["artifact_approval"]
           content_type: string
           created_at?: string
           filename: string
           id?: string
           kind: Database["public"]["Enums"]["artifact_kind"]
           project_id: string
+          retain_until?: string | null
           sha256: string
           size_bytes: number
           storage_key: string
           task_id?: string | null
           uploaded_by?: string | null
+          visibility?: Database["public"]["Enums"]["artifact_visibility"]
         }
         Update: {
+          agent_run_id?: string | null
+          approval?: Database["public"]["Enums"]["artifact_approval"]
           content_type?: string
           created_at?: string
           filename?: string
           id?: string
           kind?: Database["public"]["Enums"]["artifact_kind"]
           project_id?: string
+          retain_until?: string | null
           sha256?: string
           size_bytes?: number
           storage_key?: string
           task_id?: string | null
           uploaded_by?: string | null
+          visibility?: Database["public"]["Enums"]["artifact_visibility"]
         }
         Relationships: [
+          {
+            foreignKeyName: "artifacts_agent_run_id_fkey"
+            columns: ["agent_run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "artifacts_project_id_fkey"
             columns: ["project_id"]
@@ -239,6 +378,54 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      command_approvals: {
+        Row: {
+          command: string
+          created_at: string
+          decided_at: string | null
+          decision: Database["public"]["Enums"]["command_decision"]
+          id: string
+          project_id: string
+          reason: string | null
+          run_id: string
+        }
+        Insert: {
+          command: string
+          created_at?: string
+          decided_at?: string | null
+          decision?: Database["public"]["Enums"]["command_decision"]
+          id?: string
+          project_id: string
+          reason?: string | null
+          run_id: string
+        }
+        Update: {
+          command?: string
+          created_at?: string
+          decided_at?: string | null
+          decision?: Database["public"]["Enums"]["command_decision"]
+          id?: string
+          project_id?: string
+          reason?: string | null
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "command_approvals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "command_approvals_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -797,6 +984,63 @@ export type Database = {
           },
         ]
       }
+      sandbox_sessions: {
+        Row: {
+          closed_at: string | null
+          connected_at: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          idle_seconds: number
+          kind: Database["public"]["Enums"]["sandbox_session_kind"]
+          project_id: string
+          task_id: string | null
+          ticket_hash: string
+        }
+        Insert: {
+          closed_at?: string | null
+          connected_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          idle_seconds: number
+          kind: Database["public"]["Enums"]["sandbox_session_kind"]
+          project_id: string
+          task_id?: string | null
+          ticket_hash: string
+        }
+        Update: {
+          closed_at?: string | null
+          connected_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          idle_seconds?: number
+          kind?: Database["public"]["Enums"]["sandbox_session_kind"]
+          project_id?: string
+          task_id?: string | null
+          ticket_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sandbox_sessions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sandbox_sessions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signup_allowlist: {
         Row: {
           created_at: string
@@ -1135,6 +1379,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "usage_ledger_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "usage_ledger_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
@@ -1196,35 +1447,68 @@ export type Database = {
       }
       workspace_settings: {
         Row: {
+          agent_max_iterations: number
+          approval_mode: Database["public"]["Enums"]["approval_mode"]
           attachment_kinds: Database["public"]["Enums"]["artifact_kind"][]
           attachment_max_mb: number
+          build_command: string
+          custom_commands: string[]
+          install_command: string
           max_file_mb: number
           max_files: number
           max_upload_mb: number
+          node_major: number
+          plain_env: Json
           project_id: string
           skip_folders: string[]
+          start_command: string
+          terminal_idle_seconds: number
+          terminal_max_sessions: number
+          test_command: string
           updated_at: string
           version: number
         }
         Insert: {
+          agent_max_iterations?: number
+          approval_mode?: Database["public"]["Enums"]["approval_mode"]
           attachment_kinds?: Database["public"]["Enums"]["artifact_kind"][]
           attachment_max_mb?: number
+          build_command?: string
+          custom_commands?: string[]
+          install_command?: string
           max_file_mb?: number
           max_files?: number
           max_upload_mb?: number
+          node_major?: number
+          plain_env?: Json
           project_id: string
           skip_folders?: string[]
+          start_command?: string
+          terminal_idle_seconds?: number
+          terminal_max_sessions?: number
+          test_command?: string
           updated_at?: string
           version?: number
         }
         Update: {
+          agent_max_iterations?: number
+          approval_mode?: Database["public"]["Enums"]["approval_mode"]
           attachment_kinds?: Database["public"]["Enums"]["artifact_kind"][]
           attachment_max_mb?: number
+          build_command?: string
+          custom_commands?: string[]
+          install_command?: string
           max_file_mb?: number
           max_files?: number
           max_upload_mb?: number
+          node_major?: number
+          plain_env?: Json
           project_id?: string
           skip_folders?: string[]
+          start_command?: string
+          terminal_idle_seconds?: number
+          terminal_max_sessions?: number
+          test_command?: string
           updated_at?: string
           version?: number
         }
@@ -1300,9 +1584,21 @@ export type Database = {
       }
     }
     Enums: {
+      agent_kind: "planner" | "coder"
+      agent_run_status:
+        | "queued"
+        | "running"
+        | "waiting_approval"
+        | "succeeded"
+        | "failed"
+        | "cancelled"
+      approval_mode: "ask" | "safe_list" | "custom"
       approval_state: "draft" | "approved" | "rejected"
+      artifact_approval: "pending" | "approved" | "rejected"
       artifact_kind: "image" | "pdf" | "text" | "other"
+      artifact_visibility: "internal" | "client"
       changeset_status: "open" | "committed" | "discarded"
+      command_decision: "pending" | "approved" | "denied"
       file_change: "add" | "modify" | "delete"
       integration_status: "active" | "suspended" | "removed"
       membership_role: "owner" | "client" | "viewer"
@@ -1323,6 +1619,7 @@ export type Database = {
         | "research"
       project_status: "active" | "on_hold" | "completed"
       requirement_priority: "must" | "should" | "could" | "wont"
+      sandbox_session_kind: "terminal" | "agent"
       task_link_kind: "branch" | "commit" | "pull_request"
       upload_target: "worktree" | "attachment"
       webhook_status: "pending" | "processing" | "processed" | "failed" | "dead"
@@ -1468,9 +1765,22 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agent_kind: ["planner", "coder"],
+      agent_run_status: [
+        "queued",
+        "running",
+        "waiting_approval",
+        "succeeded",
+        "failed",
+        "cancelled",
+      ],
+      approval_mode: ["ask", "safe_list", "custom"],
       approval_state: ["draft", "approved", "rejected"],
+      artifact_approval: ["pending", "approved", "rejected"],
       artifact_kind: ["image", "pdf", "text", "other"],
+      artifact_visibility: ["internal", "client"],
       changeset_status: ["open", "committed", "discarded"],
+      command_decision: ["pending", "approved", "denied"],
       file_change: ["add", "modify", "delete"],
       integration_status: ["active", "suspended", "removed"],
       membership_role: ["owner", "client", "viewer"],
@@ -1493,6 +1803,7 @@ export const Constants = {
       ],
       project_status: ["active", "on_hold", "completed"],
       requirement_priority: ["must", "should", "could", "wont"],
+      sandbox_session_kind: ["terminal", "agent"],
       task_link_kind: ["branch", "commit", "pull_request"],
       upload_target: ["worktree", "attachment"],
       webhook_status: ["pending", "processing", "processed", "failed", "dead"],

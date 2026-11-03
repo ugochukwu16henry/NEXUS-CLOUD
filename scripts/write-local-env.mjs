@@ -20,7 +20,10 @@ const lines = [
   `SUPABASE_SECRET_KEY=${status.SECRET_KEY}`,
   `NEXUS_OWNER_EMAIL=${ownerEmail}`,
   "NEXUS_MODEL_FIXTURE=1",
+  "NEXUS_AGENT_FIXTURE=1",
   "NEXUS_GLOBAL_MONTHLY_BUDGET_USD=20",
+  `DATABASE_URL=${status.DB_URL ?? ""}`,
+  "WORKER_WS_URL=ws://127.0.0.1:8787",
   `MAILPIT_URL=${status.MAILPIT_URL ?? status.INBUCKET_URL}`,
 ];
 

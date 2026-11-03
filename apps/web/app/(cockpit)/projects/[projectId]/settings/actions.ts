@@ -42,6 +42,26 @@ const settingsInput = z.object({
     .refine((folders) => folders.every((folder) => /^[A-Za-z0-9._-]{1,100}$/.test(folder)), {
       error: "Folder names may only use letters, digits, dots, dashes and underscores.",
     }),
+  nodeMajor: number(20, 24, "Node version"),
+  installCommand: z.string().trim().min(1).max(200),
+  testCommand: z.string().trim().min(1).max(200),
+  buildCommand: z.string().trim().min(1).max(200),
+  startCommand: z.string().trim().min(1).max(200),
+  terminalIdleSeconds: number(60, 3600, "Terminal idle timeout"),
+  terminalMaxSessions: number(1, 8, "Open terminals"),
+  approvalMode: z.enum(["ask", "safe_list", "custom"]),
+  customCommands: z
+    .string()
+    .max(2000)
+    .transform((value) =>
+      value
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 40),
+    ),
+  agentMaxIterations: number(1, 30, "Agent iterations"),
+  plainEnv: z.string().max(4000),
 });
 
 /** Project → Settings → Workspace (ADR 0016): upload limits, attachment types, folders to skip. */
@@ -74,6 +94,27 @@ export const updateWorkspaceSettings = defineAction(
     )
       .filter(([, on]) => on)
       .map(([kind]) => kind);
+    const plainEnv: Record<string, string> = {};
+    for (const line of input.plainEnv.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq <= 0) {
+        return { status: "error", message: "Each env line must be NAME=value.", audit };
+      }
+      const key = trimmed.slice(0, eq);
+      if (
+        !/^[A-Z_][A-Z0-9_]{0,40}$/.test(key) ||
+        /SECRET|TOKEN|PASSWORD|CREDENTIAL|KEY/.test(key)
+      ) {
+        return {
+          status: "error",
+          message: `${key} looks like a secret. Secrets stay in the secret store, not this form.`,
+          audit,
+        };
+      }
+      plainEnv[key] = trimmed.slice(eq + 1);
+    }
 
     const { error } = await createSupabaseAdminClient().from("workspace_settings").upsert({
       project_id: input.projectId,
@@ -83,6 +124,17 @@ export const updateWorkspaceSettings = defineAction(
       attachment_max_mb: input.attachmentMaxMb,
       attachment_kinds: kinds,
       skip_folders: input.skipFolders,
+      node_major: input.nodeMajor,
+      install_command: input.installCommand,
+      test_command: input.testCommand,
+      build_command: input.buildCommand,
+      start_command: input.startCommand,
+      terminal_idle_seconds: input.terminalIdleSeconds,
+      terminal_max_sessions: input.terminalMaxSessions,
+      approval_mode: input.approvalMode,
+      custom_commands: input.customCommands,
+      agent_max_iterations: input.agentMaxIterations,
+      plain_env: plainEnv,
     });
     if (error) return { status: "error", message: "Couldn't save the workspace settings.", audit };
     revalidatePath(`/projects/${input.projectId}`, "layout");

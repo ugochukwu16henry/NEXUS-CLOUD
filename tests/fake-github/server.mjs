@@ -166,6 +166,15 @@ const server = createServer(async (req, res) => {
       },
     ]);
   }
+  if (path.startsWith(`${base}/tarball/`)) {
+    const archive = git.tarball(
+      decodeURIComponent(path.slice(`${base}/tarball/`.length)),
+      "nexus-test-org-nexus-pilot-app",
+    );
+    if (!archive) return send(res, 404, { message: "Not Found" });
+    res.writeHead(200, { "Content-Type": "application/x-gzip" });
+    return res.end(archive);
+  }
   if (path.startsWith(`${base}/commits/`) && path.endsWith("/check-runs")) {
     return send(res, 200, {
       total_count: 1,

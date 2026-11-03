@@ -1,0 +1,26 @@
+{
+  "name": "@nexus/agents",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./boss": "./src/boss.ts",
+    "./e2b": "./src/e2b-driver.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:sandbox": "vitest run src/sandbox.integration.test.ts"
+  },
+  "dependencies": {
+    "@nexus/model-gateway": "workspace:*",
+    "@nexus/observability": "workspace:*",
+    "@nexus/workspace": "workspace:*",
+    "e2b": "2.56.0",
+    "pg-boss": "^10.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0"
+  }
+}

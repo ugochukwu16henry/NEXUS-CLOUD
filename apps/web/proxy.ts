@@ -45,7 +45,20 @@ export async function proxy(request: NextRequest) {
   // Never trust an incoming correlation ID; each request gets its own.
   const correlationId = crypto.randomUUID();
   const nonce = createNonce();
-  const csp = buildCsp({ nonce, isDev: process.env.NODE_ENV === "development", supabaseUrl });
+  let workerOrigin: string | undefined;
+  if (process.env.WORKER_WS_URL) {
+    try {
+      workerOrigin = new URL(process.env.WORKER_WS_URL).origin;
+    } catch {
+      workerOrigin = undefined;
+    }
+  }
+  const csp = buildCsp({
+    nonce,
+    isDev: process.env.NODE_ENV === "development",
+    supabaseUrl,
+    ...(workerOrigin ? { workerOrigin } : {}),
+  });
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(CORRELATION_HEADER, correlationId);

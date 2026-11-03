@@ -25,6 +25,7 @@ const EXPECTED: Record<Role, Record<Permission, boolean>> = {
     "business:read": true,
     "integration:manage": true,
     "budget:extend": true,
+    "terminal:start": true,
   },
   client: {
     "workspace:read": true,
@@ -40,6 +41,7 @@ const EXPECTED: Record<Role, Record<Permission, boolean>> = {
     "business:read": false,
     "integration:manage": false,
     "budget:extend": false,
+    "terminal:start": false,
   },
   viewer: {
     "workspace:read": true,
@@ -55,6 +57,7 @@ const EXPECTED: Record<Role, Record<Permission, boolean>> = {
     "business:read": false,
     "integration:manage": false,
     "budget:extend": false,
+    "terminal:start": false,
   },
 };
 

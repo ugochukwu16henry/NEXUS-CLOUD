@@ -22,6 +22,8 @@ export const PERMISSIONS = [
   "integration:manage",
   /** Raise a spend cap or lift a hard stop (Sprint 5). */
   "budget:extend",
+  /** Open a shell in the project sandbox (Sprint 6). */
+  "terminal:start",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -46,6 +48,8 @@ export const RISK_PERMISSIONS: ReadonlySet<Permission> = new Set([
   "integration:manage",
   // Raising a cap or lifting a hard stop lets models keep spending.
   "budget:extend",
+  // A terminal is a shell inside the sandbox.
+  "terminal:start",
 ]);
 
 export type AssuranceLevel = "aal1" | "aal2";

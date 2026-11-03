@@ -45,6 +45,15 @@ export const serverEnvSchema = publicEnvSchema.extend({
    * Ignored unless the Supabase URL is localhost.
    */
   NEXUS_MODEL_FIXTURE: z.enum(["0", "1"]).default("0"),
+  /**
+   * Local and end-to-end tests only. A recorded plan and diff, with no provider call.
+   * Ignored unless the Supabase URL is localhost.
+   */
+  NEXUS_AGENT_FIXTURE: z.enum(["0", "1"]).default("0"),
+  /** Direct Postgres URL for pg-boss. The agent queue stays off until this is set. */
+  DATABASE_URL: z.string().optional(),
+  /** WebSocket address of the worker terminal gateway. Passed to the browser as a prop. */
+  WORKER_WS_URL: z.url().optional(),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;

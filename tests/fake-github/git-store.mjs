@@ -2,6 +2,7 @@
 // real SHA-1 IDs computed the way Git does for blobs; trees are stored flat (path → blob), which is
 // all the endpoints Nexus uses can tell apart.
 import { createHash } from "node:crypto";
+import { gzipSync } from "node:zlib";
 
 const sha1 = (data) => createHash("sha1").update(data).digest("hex");
 const blobSha = (bytes) => sha1(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes]));
@@ -211,5 +212,32 @@ export function createGitStore({ protectedBranches = ["main"] } = {}) {
     return null;
   }
 
-  return { reset, advance, log, handle, refs, pulls, commits, trees, blobs };
+  /** A gzipped tar of a commit, one top-level folder, as GET /repos/{repo}/tarball/{ref} returns. */
+  function tarball(ref, folder) {
+    const sha = refs.get(ref) ?? (commits.has(ref) ? ref : null);
+    if (!sha) return null;
+    const parts = [];
+    for (const [path, blob] of trees.get(commits.get(sha).tree)) {
+      const bytes = blobs.get(blob);
+      const header = Buffer.alloc(512);
+      header.write(`${folder}-${sha.slice(0, 7)}/${path}`.slice(0, 99), 0);
+      header.write("0000644\0", 100);
+      header.write("0000000\0", 108);
+      header.write("0000000\0", 116);
+      header.write(bytes.length.toString(8).padStart(11, "0") + "\0", 124);
+      header.write("00000000000\0", 136);
+      header.write("        ", 148);
+      header.write("0", 156);
+      header.write("ustar\0", 257);
+      header.write("00", 263);
+      let sum = 0;
+      for (const byte of header) sum += byte;
+      header.write(sum.toString(8).padStart(6, "0") + "\0 ", 148);
+      parts.push(header, bytes, Buffer.alloc((512 - (bytes.length % 512)) % 512));
+    }
+    parts.push(Buffer.alloc(1024));
+    return gzipSync(Buffer.concat(parts));
+  }
+
+  return { reset, advance, log, handle, tarball, refs, pulls, commits, trees, blobs };
 }
