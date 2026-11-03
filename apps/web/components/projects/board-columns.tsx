@@ -105,7 +105,8 @@ export function BoardColumns({
         aria-label="Workflow board, scrolls sideways"
         aria-busy={pending}
         tabIndex={0}
-        className="overflow-x-auto pb-2"
+        // On a phone each column fills most of the screen and swipes into place.
+        className="snap-x snap-mandatory overflow-x-auto pb-2 sm:snap-none"
       >
         <ol className="flex gap-3" aria-label="Workflow columns">
           {columns.map((column) => {
@@ -124,7 +125,7 @@ export function BoardColumns({
                   setOverColumn((current) => (current === column.state ? null : current))
                 }
                 onDrop={(event) => onDrop(event, column.state)}
-                className={`w-64 shrink-0 rounded-md p-1 ${
+                className={`w-[85vw] max-w-xs shrink-0 snap-start rounded-md p-1 sm:w-64 ${
                   dragged && canDrop ? "outline-dashed outline-1 outline-nx-teal/60" : ""
                 } ${overColumn === column.state ? "bg-nx-teal/10" : ""}`}
               >

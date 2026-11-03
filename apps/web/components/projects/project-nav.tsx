@@ -21,7 +21,7 @@ export function ProjectNav({ projectId }: { projectId: string }) {
 
   return (
     <nav aria-label="Project sections" className="border-b border-nx-border">
-      <ul className="flex gap-1 overflow-x-auto px-6">
+      <ul className="flex gap-1 overflow-x-auto px-2 sm:px-6">
         {SECTIONS.map(({ segment, label }) => {
           const href = base + segment;
           const active = segment === "" ? pathname === base : pathname.startsWith(href);

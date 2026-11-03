@@ -1,12 +1,25 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
+import { PwaSetup } from "@/components/pwa/pwa-setup";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Nexus Cloud",
   description: "Personal AI-powered software engineering cloud",
+  applicationName: "Nexus Cloud",
+  // Installed on an iPhone, the app opens full screen with its own name under the icon.
+  appleWebApp: { capable: true, title: "Nexus", statusBarStyle: "black" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#070b14",
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  // Content reaches the screen edges; the shell pads for the notch and the home indicator.
+  viewportFit: "cover",
 };
 
 // Self-hosted by Next.js at build time (CSP font-src 'self'); the token CSS reads these variables.
@@ -28,6 +41,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           Skip to main content
         </a>
         {children}
+        <PwaSetup />
       </body>
     </html>
   );

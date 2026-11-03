@@ -35,6 +35,9 @@ export function buildCsp({ nonce, isDev, supabaseUrl, workerOrigin }: CspOptions
       ...(workerOrigin ? [workerOrigin] : []),
       ...(isDev ? ["ws:"] : []),
     ],
+    // The installable app: its service worker (/sw.js) and manifest come from this origin only.
+    "worker-src": ["'self'"],
+    "manifest-src": ["'self'"],
     "frame-ancestors": ["'none'"],
     "base-uri": ["'self'"],
     "object-src": ["'none'"],
@@ -80,7 +83,18 @@ export function isSignedWebhookPath(pathname: string): boolean {
   return pathname.startsWith("/api/webhooks/");
 }
 
+/**
+ * The installable-app files: the browser fetches the manifest without cookies, and the service
+ * worker and offline page must load when the session has expired. None of them holds user data.
+ */
+const APP_SHELL_FILES = new Set(["/manifest.webmanifest", "/sw.js", "/offline.html"]);
+
 /** Paths reachable without a session. Everything else redirects to /login. */
 export function isPublicPath(pathname: string): boolean {
-  return pathname === "/login" || pathname.startsWith("/auth/") || isSignedWebhookPath(pathname);
+  return (
+    pathname === "/login" ||
+    pathname.startsWith("/auth/") ||
+    APP_SHELL_FILES.has(pathname) ||
+    isSignedWebhookPath(pathname)
+  );
 }

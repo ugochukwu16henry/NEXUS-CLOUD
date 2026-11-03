@@ -6,8 +6,10 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Group, Panel, Separator, usePanelRef } from "react-resizable-panels";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Logo } from "@/components/brand/logo";
+import { InstallApp } from "@/components/pwa/install-app";
 import { Announcer } from "@/components/ui/announcer";
 import { useShortcuts, type Shortcut } from "./use-shortcuts";
+import { useSmallScreen } from "./use-small-screen";
 
 export type ShellViewer = {
   label: string;
@@ -107,18 +109,13 @@ function NavList({ viewer, pathname }: { viewer: ShellViewer; pathname: string }
   );
 }
 
-/** Phones and narrow windows get a menu button instead of a resizable side panel. */
-function useSmallScreen(): boolean {
-  const [small, setSmall] = useState(false);
-  useEffect(() => {
-    const query = window.matchMedia("(max-width: 767px)");
-    const update = () => setSmall(query.matches);
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
-  return small;
-}
+/** The four places a phone user goes most, as a tab bar at the bottom of the screen. */
+const QUICK_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/projects", label: "Projects" },
+  { href: "/agents", label: "Agents" },
+  { href: "/settings", label: "Settings" },
+];
 
 export function AppShell({ viewer, children }: { viewer: ShellViewer; children: ReactNode }) {
   const pathname = usePathname();
@@ -150,55 +147,109 @@ export function AppShell({ viewer, children }: { viewer: ShellViewer; children: 
   const small = useSmallScreen();
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [menuOpen]);
 
   return (
-    <div className="flex h-screen flex-col">
-      <header className="flex items-center gap-2 border-b border-nx-border bg-nx-surface px-3 py-2 sm:gap-4 sm:px-4">
+    // dvh: on phones the browser's own bars come and go; the app always fits what is visible.
+    <div className="flex h-dvh flex-col">
+      <header className="flex items-center gap-2 border-b border-nx-border bg-nx-surface px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 sm:gap-4 sm:px-4">
         {small && (
           <button
             type="button"
             onClick={() => setMenuOpen((open) => !open)}
             aria-expanded={menuOpen}
             aria-controls="nav-menu"
-            className="rounded border border-nx-border px-2 py-0.5 text-sm"
+            className="rounded-md border border-nx-border px-2.5 py-1 text-sm"
           >
             Menu
           </button>
         )}
-        <Link href="/" className="rounded-md">
+        <Link href="/" className="rounded-md whitespace-nowrap">
           <Logo size={26} className="text-[15px]" />
         </Link>
         <span className="hidden text-sm text-nx-muted sm:inline">{viewer.workspaceName}</span>
-        <span className={`ml-auto rounded border px-2 py-0.5 text-xs ${badge.className}`}>
+        <span
+          className={`ml-auto rounded border px-2 py-0.5 text-xs whitespace-nowrap ${badge.className}`}
+        >
           {badge.text}
         </span>
-        <span className="hidden text-sm sm:inline">
+        <span className="hidden text-sm md:inline">
           {viewer.label} <span className="text-nx-muted">· {viewer.role}</span>
         </span>
+        {/* On a phone these two live in the menu: there is no keyboard, and the header is small. */}
         <button
           type="button"
           onClick={() => shortcutsDialog.current?.showModal()}
-          className="rounded border border-nx-border px-2 py-0.5 text-xs text-nx-muted"
+          className="hidden rounded border border-nx-border px-2 py-0.5 text-xs text-nx-muted md:inline-block"
           aria-label="Keyboard shortcuts"
         >
           ?
         </button>
-        <SignOutButton className="rounded border border-nx-border px-3 py-1 text-xs" />
+        <SignOutButton className="hidden rounded border border-nx-border px-3 py-1 text-xs whitespace-nowrap md:inline-block" />
       </header>
 
       {small ? (
-        <div className="relative min-h-0 flex-1">
-          {menuOpen && (
-            <nav
-              id="nav-menu"
-              aria-label="Primary"
-              className="absolute inset-y-0 left-0 z-20 w-64 overflow-y-auto border-r border-nx-border bg-nx-surface py-2 shadow-lg"
-            >
-              <NavList viewer={viewer} pathname={pathname} />
-            </nav>
-          )}
-          <div className="h-full min-h-0 overflow-auto">{children}</div>
-        </div>
+        <>
+          <div className="relative min-h-0 flex-1">
+            {menuOpen && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Close menu"
+                  onClick={() => setMenuOpen(false)}
+                  className="absolute inset-0 z-10 bg-black/50"
+                />
+                <div
+                  id="nav-menu"
+                  className="absolute inset-y-0 left-0 z-20 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-nx-border bg-nx-surface shadow-lg"
+                >
+                  <nav aria-label="Primary" className="flex-1 py-2">
+                    <NavList viewer={viewer} pathname={pathname} />
+                  </nav>
+                  <div className="space-y-3 border-t border-nx-border p-4">
+                    <p className="text-sm">
+                      {viewer.label} <span className="text-nx-muted">· {viewer.role}</span>
+                    </p>
+                    <InstallApp compact />
+                    <SignOutButton className="w-full rounded-md border border-nx-border px-3 py-2 text-sm" />
+                  </div>
+                </div>
+              </>
+            )}
+            <div className="h-full min-h-0 overflow-auto">{children}</div>
+          </div>
+          <nav
+            aria-label="Quick links"
+            className="grid grid-cols-4 border-t border-nx-border bg-nx-surface pb-[env(safe-area-inset-bottom)]"
+          >
+            {QUICK_LINKS.map((link) => {
+              const active = isActive(pathname, link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex min-h-12 flex-col items-center justify-center text-xs font-medium ${
+                    active ? "text-nx-teal" : "text-nx-muted"
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`mb-1 h-1 w-6 rounded-full ${active ? "bg-nx-teal" : "bg-transparent"}`}
+                  />
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </>
       ) : (
         <Group orientation="horizontal" className="min-h-0 flex-1">
           <Panel

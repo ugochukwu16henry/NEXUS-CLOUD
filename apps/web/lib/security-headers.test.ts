@@ -9,6 +9,11 @@ describe("buildCsp", () => {
     expect(prod).not.toMatch(/script-src[^;]*'unsafe-inline'/);
   });
 
+  it("lets only this origin provide the service worker and the app manifest", () => {
+    expect(prod).toContain("worker-src 'self'");
+    expect(prod).toContain("manifest-src 'self'");
+  });
+
   it("blocks framing, plugins and base-tag hijacking", () => {
     expect(prod).toContain("frame-ancestors 'none'");
     expect(prod).toContain("object-src 'none'");
@@ -59,9 +64,14 @@ describe("isCrossSiteMutation", () => {
 });
 
 describe("isPublicPath", () => {
-  it.each(["/login", "/auth/callback", "/api/webhooks/github"])("%s is public", (path) =>
-    expect(isPublicPath(path)).toBe(true),
-  );
+  it.each([
+    "/login",
+    "/auth/callback",
+    "/api/webhooks/github",
+    "/manifest.webmanifest",
+    "/sw.js",
+    "/offline.html",
+  ])("%s is public", (path) => expect(isPublicPath(path)).toBe(true));
   it.each([
     "/",
     "/settings",

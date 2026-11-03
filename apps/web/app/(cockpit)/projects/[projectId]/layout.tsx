@@ -22,7 +22,7 @@ export default async function ProjectLayout({
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="space-y-1 px-6 pt-5">
+      <div className="space-y-1 px-4 pt-4 sm:px-6 sm:pt-5">
         <p className="text-xs text-nx-muted">
           Project{project.client_name ? ` · ${project.client_name}` : ""}
         </p>

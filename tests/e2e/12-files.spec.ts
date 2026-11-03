@@ -176,11 +176,11 @@ test.describe("files from any device", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(codeUrl);
     await expect(page.getByRole("navigation", { name: "Primary" })).toBeHidden();
-    await page.getByRole("button", { name: "Menu" }).click();
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
     await expect(
       page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Projects" }),
     ).toBeVisible();
-    await page.getByRole("button", { name: "Menu" }).click();
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
 
     await expect(page.getByLabel("Upload .zip")).toBeAttached();
     await expect(page.getByText("On a phone, zip the folder first")).toBeVisible();

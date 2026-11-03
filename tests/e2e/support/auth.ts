@@ -15,7 +15,10 @@ export async function signIn(page: Page, options: { fresh?: boolean } = {}): Pro
     await page.context().addCookies(JSON.parse(readFileSync(SESSION_FILE, "utf8")));
     await page.goto("/");
     if (!new URL(page.url()).pathname.startsWith("/login")) {
-      await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
+      // The header logo shows at every screen size (on a phone, navigation sits behind Menu).
+      await expect(
+        page.getByRole("banner").getByRole("link", { name: "Nexus Cloud" }),
+      ).toBeVisible();
       return;
     }
     // Signed out or revoked since it was saved.
@@ -46,7 +49,7 @@ export async function signInWithEmail(page: Page, email: string): Promise<void> 
 
   await page.goto(await waitForMagicLink(email, since));
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
+  await expect(page.getByRole("banner").getByRole("link", { name: "Nexus Cloud" })).toBeVisible();
 }
 
 const STATE_DIR = join(__dirname, "..", ".state");

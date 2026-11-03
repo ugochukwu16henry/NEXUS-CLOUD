@@ -39,6 +39,11 @@ export default tseslint.config(
     settings: { next: { rootDir: "apps/web" } },
   },
   {
+    // The installable app's service worker runs in the worker scope, not a page.
+    files: ["apps/web/public/sw.js"],
+    languageOptions: { globals: { ...globals.serviceworker } },
+  },
+  {
     // Module boundaries (plan section 2.4): packages never import apps.
     files: ["packages/**/*.{ts,tsx}"],
     rules: {

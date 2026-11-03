@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { InstallApp } from "@/components/pwa/install-app";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { RevokeSessionsForm } from "@/components/settings/revoke-sessions-form";
 import { requireViewer } from "@/lib/auth/session";
@@ -19,7 +20,7 @@ export default async function SettingsPage() {
   const { data: sessions } = await supabase.rpc("my_sessions");
 
   return (
-    <main id="main" className="mx-auto max-w-3xl space-y-10 p-6">
+    <main id="main" className="mx-auto max-w-3xl space-y-10 p-4 sm:p-6">
       <h1 className="text-xl font-semibold">Settings</h1>
 
       <section aria-labelledby="profile-heading" className="space-y-4">
@@ -27,6 +28,17 @@ export default async function SettingsPage() {
           Profile
         </h2>
         <ProfileForm email={viewer.email} displayName={viewer.displayName} />
+      </section>
+
+      <section aria-labelledby="app-heading" className="space-y-2">
+        <h2 id="app-heading" className="text-lg font-semibold">
+          Install the app
+        </h2>
+        <p className="text-sm text-nx-muted">
+          Add Nexus Cloud to your phone&apos;s home screen or your computer&apos;s apps. It opens
+          full screen, like any other app, and always shows your latest work.
+        </p>
+        <InstallApp />
       </section>
 
       <section aria-labelledby="security-heading" className="space-y-2">
