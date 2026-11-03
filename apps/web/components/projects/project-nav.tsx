@@ -8,6 +8,7 @@ const SECTIONS = [
   { segment: "/board", label: "Board" },
   { segment: "/requirements", label: "Requirements" },
   { segment: "/milestones", label: "Milestones" },
+  { segment: "/code", label: "Code" },
   { segment: "/repository", label: "Repository" },
   { segment: "/activity", label: "Activity" },
   { segment: "/settings", label: "Settings" },

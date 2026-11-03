@@ -16,13 +16,14 @@ describe("buildCsp", () => {
   });
 
   it("does not let the browser talk to Supabase directly", () => {
-    expect(prod).toMatch(/connect-src 'self'(;|$)/);
+    // The one direct call: uploads to a signed Supabase Storage URL (ADR 0017).
+    expect(prod).toMatch(/connect-src 'self' https:\/\/x\.supabase\.co(;|$)/);
   });
 
   it("allows eval and websockets only in development", () => {
     const dev = buildCsp({ nonce: "n", isDev: true, supabaseUrl: "http://127.0.0.1:54321" });
     expect(dev).toContain("'unsafe-eval'");
-    expect(dev).toContain("connect-src 'self' ws:");
+    expect(dev).toMatch(/connect-src 'self' \S+ ws:/);
     expect(dev).not.toContain("upgrade-insecure-requests");
   });
 });

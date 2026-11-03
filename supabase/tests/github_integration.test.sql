@@ -24,11 +24,11 @@ insert into public.tasks (id, project_id, title)
   values ('71000000-0000-0000-0000-000000000001', '41000000-0000-0000-0000-000000000001', 'Login');
 
 insert into public.integrations (id, workspace_id, installation_id, account_login, account_type, repository_selection)
-  values ('81000000-0000-0000-0000-000000000001', '31000000-0000-0000-0000-000000000001', 4242,
+  values ('81000000-0000-0000-0000-000000000001', '31000000-0000-0000-0000-000000000001', 9424201,
           'nexus-test-org', 'Organization', 'selected');
 insert into public.repositories (id, project_id, integration_id, github_repo_id, full_name, default_branch, private, html_url)
   values ('91000000-0000-0000-0000-000000000001', '41000000-0000-0000-0000-000000000001',
-          '81000000-0000-0000-0000-000000000001', 9001, 'nexus-test-org/nexus-pilot-app', 'main', true,
+          '81000000-0000-0000-0000-000000000001', 9900101, 'nexus-test-org/nexus-pilot-app', 'main', true,
           'https://github.com/nexus-test-org/nexus-pilot-app');
 insert into public.repo_branches (repository_id, name, head_sha)
   values ('91000000-0000-0000-0000-000000000001', 'task/NX-1-login', repeat('a', 40));
@@ -40,13 +40,13 @@ insert into public.repo_pull_requests (repository_id, number, title, state, head
 insert into public.task_links (task_id, repository_id, kind, ref)
   values ('71000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001', 'branch', 'task/NX-1-login');
 insert into public.webhook_events (delivery_id, event, payload)
-  values ('d0000000-0000-0000-0000-000000000001', 'push', '{"secret":"payload body"}');
+  values ('pgtap-delivery-1', 'push', '{"secret":"payload body"}');
 
 -- ---------------------------------------------------------------- data rules (as postgres)
 
 select throws_ok(
   $$insert into public.webhook_events (delivery_id, event, payload)
-    values ('d0000000-0000-0000-0000-000000000001', 'push', '{}')$$,
+    values ('pgtap-delivery-1', 'push', '{}')$$,
   '23505', null, 'a delivery ID is stored only once (replays are recognised)'
 );
 select throws_ok(
@@ -107,7 +107,7 @@ select is((select count(*)::int from public.repo_pull_requests), 1, 'owner sees 
 select is((select count(*)::int from public.task_links), 1, 'owner sees task links');
 select is(
   (select delivery_id from public.webhook_events limit 1),
-  'd0000000-0000-0000-0000-000000000001',
+  'pgtap-delivery-1',
   'owner sees delivery status for the dead-letter view'
 );
 select throws_ok(
@@ -152,7 +152,7 @@ select is((select count(*)::int from public.webhook_events), 0, 'clients see no 
 
 reset role;
 insert into public.webhook_events (delivery_id, event, payload, next_attempt_at)
-  values ('d0000000-0000-0000-0000-000000000002', 'push', '{}', now() + interval '1 hour');
+  values ('pgtap-delivery-2', 'push', '{}', now() + interval '1 hour');
 
 select is(
   (select count(*)::int from public.claim_webhook_events(10)),
@@ -160,7 +160,7 @@ select is(
   'only due deliveries are claimed (the future retry waits)'
 );
 select is(
-  (select attempts from public.webhook_events where delivery_id = 'd0000000-0000-0000-0000-000000000001'),
+  (select attempts from public.webhook_events where delivery_id = 'pgtap-delivery-1'),
   1,
   'claiming counts an attempt and marks it processing'
 );
@@ -171,7 +171,7 @@ select is(
 );
 
 update public.webhook_events set locked_at = now() - interval '11 minutes'
-  where delivery_id = 'd0000000-0000-0000-0000-000000000001';
+  where delivery_id = 'pgtap-delivery-1';
 select is(
   (select attempts from public.claim_webhook_events(10)),
   2,
@@ -179,10 +179,10 @@ select is(
 );
 
 update public.webhook_events set status = 'pending', next_attempt_at = now()
-  where delivery_id = 'd0000000-0000-0000-0000-000000000002';
+  where delivery_id = 'pgtap-delivery-2';
 select is(
-  (select delivery_id from public.claim_webhook_events(10, 'd0000000-0000-0000-0000-000000000002')),
-  'd0000000-0000-0000-0000-000000000002',
+  (select delivery_id from public.claim_webhook_events(10, 'pgtap-delivery-2')),
+  'pgtap-delivery-2',
   'the webhook route can claim exactly its own delivery'
 );
 

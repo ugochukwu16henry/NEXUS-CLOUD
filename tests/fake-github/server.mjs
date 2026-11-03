@@ -3,9 +3,11 @@
 // generated for this test run (never committed), and can simulate an outage.
 //
 // Control endpoints: POST /_fake/outage?count=N (next N API calls return 503), POST /_fake/reset,
-// GET /_fake/token-requests (the scopes Nexus asked for), GET /_fake/health.
+// GET /_fake/token-requests (the scopes Nexus asked for), POST /_fake/advance?branch=B (someone
+// else pushes to B), GET /_fake/health. Repository contents live in an in-memory Git store.
 import { createVerify } from "node:crypto";
 import { createServer } from "node:http";
+import { createGitStore } from "./git-store.mjs";
 
 const PORT = Number(process.env.FAKE_GITHUB_PORT ?? 3299);
 const APP_URL = process.env.FAKE_GITHUB_APP_URL ?? "http://localhost:3100";
@@ -22,10 +24,10 @@ const REPO = {
   private: true,
   html_url: `https://github.com/${ACCOUNT}/nexus-pilot-app`,
 };
-const sha = (c) => c.repeat(40);
 const USER_TOKEN = "gho_fake_user_token";
 const INSTALL_TOKEN = "ghs_fake_installation_token";
 
+const git = createGitStore();
 let outage = 0;
 let tokenRequests = [];
 const codes = new Set();
@@ -65,6 +67,7 @@ const server = createServer(async (req, res) => {
   if (path === "/_fake/reset") {
     outage = 0;
     tokenRequests = [];
+    git.reset();
     return send(res, 200, { ok: true });
   }
   if (path === "/_fake/outage") {
@@ -72,6 +75,13 @@ const server = createServer(async (req, res) => {
     return send(res, 200, { outage });
   }
   if (path === "/_fake/token-requests") return send(res, 200, tokenRequests);
+  if (path === "/_fake/advance") {
+    git.advance(url.searchParams.get("branch") ?? "main");
+    return send(res, 200, { ok: true });
+  }
+  if (path === "/_fake/branch-head") {
+    return send(res, 200, { sha: git.refs.get(url.searchParams.get("branch") ?? "main") ?? null });
+  }
 
   // ---- github.com (web)
   if (path === "/apps/nexus-test/installations/new") {
@@ -129,25 +139,20 @@ const server = createServer(async (req, res) => {
     return send(res, 200, { total_count: 1, repositories: [REPO] });
   }
   const base = `/repos/${REPO.full_name}`;
-  if (path === `${base}/branches`) {
-    return send(res, 200, [
-      { name: "main", commit: { sha: sha("1") }, protected: true },
-      { name: "task/NX-1-login-form", commit: { sha: sha("2") }, protected: false },
-    ]);
-  }
   if (path === `${base}/commits`) {
-    return send(res, 200, [
-      {
-        sha: sha("1"),
-        html_url: `${REPO.html_url}/commit/${sha("1")}`,
-        commit: {
-          message: "Initial commit",
-          author: { name: "Henry", date: "2026-11-01T09:00:00Z" },
-        },
-      },
-    ]);
+    const branch = url.searchParams.get("sha") ?? "main";
+    return send(
+      res,
+      200,
+      git.log(branch, Number(url.searchParams.get("per_page") ?? 30)).map((commit) => ({
+        sha: commit.sha,
+        html_url: `${REPO.html_url}/commit/${commit.sha}`,
+        commit: { message: commit.message, author: { name: commit.author, date: commit.date } },
+      })),
+    );
   }
-  if (path === `${base}/pulls`) {
+  if (path === `${base}/pulls` && req.method === "GET") {
+    const head = git.refs.get("task/NX-1-login-form");
     return send(res, 200, [
       {
         number: 7,
@@ -156,7 +161,7 @@ const server = createServer(async (req, res) => {
         merged_at: null,
         html_url: `${REPO.html_url}/pull/7`,
         updated_at: "2026-11-04T09:00:00Z",
-        head: { ref: "task/NX-1-login-form", sha: sha("2") },
+        head: { ref: "task/NX-1-login-form", sha: head },
         base: { ref: "main" },
       },
     ]);
@@ -167,6 +172,9 @@ const server = createServer(async (req, res) => {
       check_runs: [{ status: "completed", conclusion: "success" }],
     });
   }
+  const body = ["POST", "PATCH"].includes(req.method) ? await readJson(req) : {};
+  const handled = git.handle(req.method, path, body, REPO);
+  if (handled) return send(res, handled.status, handled.body);
   return send(res, 404, { message: "Not Found" });
 });
 

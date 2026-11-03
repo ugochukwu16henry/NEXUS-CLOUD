@@ -1,3 +1,4 @@
+export * from "./git-ops";
 export * from "./github/app-jwt";
 export * from "./github/client";
 export * from "./github/events";

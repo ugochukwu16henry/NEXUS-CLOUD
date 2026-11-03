@@ -9,6 +9,63 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      artifacts: {
+        Row: {
+          content_type: string
+          created_at: string
+          filename: string
+          id: string
+          kind: Database["public"]["Enums"]["artifact_kind"]
+          project_id: string
+          sha256: string
+          size_bytes: number
+          storage_key: string
+          task_id: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          filename: string
+          id?: string
+          kind: Database["public"]["Enums"]["artifact_kind"]
+          project_id: string
+          sha256: string
+          size_bytes: number
+          storage_key: string
+          task_id?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          filename?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["artifact_kind"]
+          project_id?: string
+          sha256?: string
+          size_bytes?: number
+          storage_key?: string
+          task_id?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artifacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifacts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_events: {
         Row: {
           action: string
@@ -68,6 +125,120 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      changeset_files: {
+        Row: {
+          change: Database["public"]["Enums"]["file_change"]
+          changeset_id: string
+          held_reason: string | null
+          is_binary: boolean
+          path: string
+          sha256: string | null
+          size_bytes: number
+          storage_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          change: Database["public"]["Enums"]["file_change"]
+          changeset_id: string
+          held_reason?: string | null
+          is_binary?: boolean
+          path: string
+          sha256?: string | null
+          size_bytes?: number
+          storage_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          change?: Database["public"]["Enums"]["file_change"]
+          changeset_id?: string
+          held_reason?: string | null
+          is_binary?: boolean
+          path?: string
+          sha256?: string | null
+          size_bytes?: number
+          storage_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "changeset_files_changeset_id_fkey"
+            columns: ["changeset_id"]
+            isOneToOne: false
+            referencedRelation: "changesets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      changesets: {
+        Row: {
+          base_sha: string
+          branch: string
+          committed_sha: string | null
+          created_at: string
+          id: string
+          locked_by: string | null
+          locked_until: string | null
+          project_id: string
+          repository_id: string
+          status: Database["public"]["Enums"]["changeset_status"]
+          task_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          base_sha: string
+          branch: string
+          committed_sha?: string | null
+          created_at?: string
+          id?: string
+          locked_by?: string | null
+          locked_until?: string | null
+          project_id: string
+          repository_id: string
+          status?: Database["public"]["Enums"]["changeset_status"]
+          task_id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          base_sha?: string
+          branch?: string
+          committed_sha?: string | null
+          created_at?: string
+          id?: string
+          locked_by?: string | null
+          locked_until?: string | null
+          project_id?: string
+          repository_id?: string
+          status?: Database["public"]["Enums"]["changeset_status"]
+          task_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "changesets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "changesets_repository_id_fkey"
+            columns: ["repository_id"]
+            isOneToOne: false
+            referencedRelation: "repositories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "changesets_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -748,6 +919,57 @@ export type Database = {
           },
         ]
       }
+      upload_batches: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          files: Json
+          finished_at: string | null
+          id: string
+          project_id: string
+          target: Database["public"]["Enums"]["upload_target"]
+          task_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          files: Json
+          finished_at?: string | null
+          id?: string
+          project_id: string
+          target: Database["public"]["Enums"]["upload_target"]
+          task_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          files?: Json
+          finished_at?: string | null
+          id?: string
+          project_id?: string
+          target?: Database["public"]["Enums"]["upload_target"]
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upload_batches_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upload_batches_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_events: {
         Row: {
           action: string | null
@@ -798,6 +1020,50 @@ export type Database = {
           status?: Database["public"]["Enums"]["webhook_status"]
         }
         Relationships: []
+      }
+      workspace_settings: {
+        Row: {
+          attachment_kinds: Database["public"]["Enums"]["artifact_kind"][]
+          attachment_max_mb: number
+          max_file_mb: number
+          max_files: number
+          max_upload_mb: number
+          project_id: string
+          skip_folders: string[]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          attachment_kinds?: Database["public"]["Enums"]["artifact_kind"][]
+          attachment_max_mb?: number
+          max_file_mb?: number
+          max_files?: number
+          max_upload_mb?: number
+          project_id: string
+          skip_folders?: string[]
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          attachment_kinds?: Database["public"]["Enums"]["artifact_kind"][]
+          attachment_max_mb?: number
+          max_file_mb?: number
+          max_files?: number
+          max_upload_mb?: number
+          project_id?: string
+          skip_folders?: string[]
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workspaces: {
         Row: {
@@ -862,12 +1128,16 @@ export type Database = {
     }
     Enums: {
       approval_state: "draft" | "approved" | "rejected"
+      artifact_kind: "image" | "pdf" | "text" | "other"
+      changeset_status: "open" | "committed" | "discarded"
+      file_change: "add" | "modify" | "delete"
       integration_status: "active" | "suspended" | "removed"
       membership_role: "owner" | "client" | "viewer"
       milestone_status: "planned" | "in_progress" | "done"
       project_status: "active" | "on_hold" | "completed"
       requirement_priority: "must" | "should" | "could" | "wont"
       task_link_kind: "branch" | "commit" | "pull_request"
+      upload_target: "worktree" | "attachment"
       webhook_status: "pending" | "processing" | "processed" | "failed" | "dead"
       workflow_state:
         | "backlog"
@@ -1012,12 +1282,16 @@ export const Constants = {
   public: {
     Enums: {
       approval_state: ["draft", "approved", "rejected"],
+      artifact_kind: ["image", "pdf", "text", "other"],
+      changeset_status: ["open", "committed", "discarded"],
+      file_change: ["add", "modify", "delete"],
       integration_status: ["active", "suspended", "removed"],
       membership_role: ["owner", "client", "viewer"],
       milestone_status: ["planned", "in_progress", "done"],
       project_status: ["active", "on_hold", "completed"],
       requirement_priority: ["must", "should", "could", "wont"],
       task_link_kind: ["branch", "commit", "pull_request"],
+      upload_target: ["worktree", "attachment"],
       webhook_status: ["pending", "processing", "processed", "failed", "dead"],
       workflow_state: [
         "backlog",

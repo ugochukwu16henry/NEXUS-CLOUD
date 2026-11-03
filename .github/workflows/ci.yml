@@ -104,8 +104,8 @@ jobs:
       - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
-      - name: Start Supabase (database, auth, API, mail)
-        run: supabase start -x storage-api,imgproxy,realtime,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
+      - name: Start Supabase (database, auth, API, storage, mail)
+        run: supabase start -x imgproxy,realtime,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
       - run: pnpm install --frozen-lockfile
       - name: Write local env for the web app
         run: node scripts/write-local-env.mjs owner@nexus.test

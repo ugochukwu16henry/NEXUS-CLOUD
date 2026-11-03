@@ -9,6 +9,7 @@ export type CspOptions = {
 };
 
 export function buildCsp({ nonce, isDev, supabaseUrl }: CspOptions): string {
+  const supabaseOrigin = new URL(supabaseUrl).origin;
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     // Next.js tags its own scripts with the nonce; 'strict-dynamic' lets them load chunks.
@@ -21,10 +22,12 @@ export function buildCsp({ nonce, isDev, supabaseUrl }: CspOptions): string {
     // Panels and Next.js set inline style attributes; styles cannot run code.
     "style-src": ["'self'", "'unsafe-inline'"],
     // data: is needed for the TOTP QR code returned by Supabase Auth.
-    "img-src": ["'self'", "data:", "blob:"],
+    // Attachment thumbnails are short-lived signed URLs from Supabase Storage.
+    "img-src": ["'self'", "data:", "blob:", supabaseOrigin],
     "font-src": ["'self'"],
-    // Browsers never call Supabase directly (sessions are HttpOnly, ADR 0013).
-    "connect-src": ["'self'", ...(isDev ? ["ws:"] : [])],
+    // Sessions never leave the server (HttpOnly, ADR 0013). The one direct call is an upload to a
+    // single-object signed URL in Supabase Storage (ADR 0017).
+    "connect-src": ["'self'", supabaseOrigin, ...(isDev ? ["ws:"] : [])],
     "frame-ancestors": ["'none'"],
     "base-uri": ["'self'"],
     "object-src": ["'none'"],

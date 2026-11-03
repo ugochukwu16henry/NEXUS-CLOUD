@@ -72,6 +72,17 @@ export type PullRequestSummary = {
   updatedAt: string;
 };
 export type ChecksSummary = "none" | "pending" | "success" | "failure";
+export type TreeEntry = { path: string; sha: string; mode: string; size: number };
+
+/** Read and write on one repository's contents and pull requests (commit, revert, open a PR). */
+export const WRITE_PERMISSIONS = {
+  metadata: "read",
+  contents: "write",
+  pull_requests: "write",
+} as const;
+
+/** Branch names go into URL paths segment by segment (task/NX-1-x keeps its slash). */
+const encodeRef = (branch: string) => branch.split("/").map(encodeURIComponent).join("/");
 
 type Json = Record<string, unknown>;
 const str = (value: unknown): string => (typeof value === "string" ? value : "");
@@ -222,6 +233,134 @@ export class GitHubClient {
     });
     const runs = Array.isArray(data.check_runs) ? data.check_runs.map(obj) : [];
     return summarizeChecks(runs.map((run) => ({ status: run.status, conclusion: run.conclusion })));
+  }
+
+  // ------------------------------------------------------------ git data (Sprint 4, ADR 0017)
+
+  /** The commit a branch points to, or null when the branch doesn't exist. */
+  async getBranchHead(token: string, fullName: string, branch: string): Promise<string | null> {
+    try {
+      const data = await this.request(
+        "GET",
+        `/repos/${fullName}/git/ref/heads/${encodeRef(branch)}`,
+        {
+          auth: `Bearer ${token}`,
+        },
+      );
+      return str(obj(data.object).sha) || null;
+    } catch (error) {
+      if (error instanceof GitHubError && error.status === 404) return null;
+      throw error;
+    }
+  }
+
+  async createBranch(token: string, fullName: string, branch: string, sha: string): Promise<void> {
+    await this.request("POST", `/repos/${fullName}/git/refs`, {
+      auth: `Bearer ${token}`,
+      body: { ref: `refs/heads/${branch}`, sha },
+    });
+  }
+
+  async getCommit(
+    token: string,
+    fullName: string,
+    sha: string,
+  ): Promise<{ treeSha: string; parents: string[]; message: string }> {
+    const data = await this.request("GET", `/repos/${fullName}/git/commits/${sha}`, {
+      auth: `Bearer ${token}`,
+    });
+    return {
+      treeSha: str(obj(data.tree).sha),
+      parents: (Array.isArray(data.parents) ? data.parents : []).map((parent) =>
+        str(obj(parent).sha),
+      ),
+      message: str(data.message),
+    };
+  }
+
+  /** Every file in a commit's tree (recursive), with blob SHAs and sizes. */
+  async getTree(token: string, fullName: string, treeSha: string): Promise<TreeEntry[]> {
+    const data = await this.request("GET", `/repos/${fullName}/git/trees/${treeSha}?recursive=1`, {
+      auth: `Bearer ${token}`,
+    });
+    const entries = Array.isArray(data.tree) ? data.tree.map(obj) : [];
+    return entries
+      .filter((entry) => entry.type === "blob")
+      .map((entry) => ({
+        path: str(entry.path),
+        sha: str(entry.sha),
+        mode: str(entry.mode),
+        size: Number(entry.size ?? 0),
+      }));
+  }
+
+  async getBlob(token: string, fullName: string, sha: string): Promise<Uint8Array> {
+    const data = await this.request("GET", `/repos/${fullName}/git/blobs/${sha}`, {
+      auth: `Bearer ${token}`,
+    });
+    return new Uint8Array(Buffer.from(str(data.content).replace(/\n/g, ""), "base64"));
+  }
+
+  async createBlob(token: string, fullName: string, content: Uint8Array): Promise<string> {
+    const data = await this.request("POST", `/repos/${fullName}/git/blobs`, {
+      auth: `Bearer ${token}`,
+      body: { content: Buffer.from(content).toString("base64"), encoding: "base64" },
+    });
+    return str(data.sha);
+  }
+
+  /** A new tree on top of `baseTree`; an entry with `sha: null` deletes that path. */
+  async createTree(
+    token: string,
+    fullName: string,
+    baseTree: string,
+    entries: { path: string; sha: string | null; mode?: string }[],
+  ): Promise<string> {
+    const data = await this.request("POST", `/repos/${fullName}/git/trees`, {
+      auth: `Bearer ${token}`,
+      body: {
+        base_tree: baseTree,
+        tree: entries.map((entry) => ({
+          path: entry.path,
+          mode: entry.mode ?? "100644",
+          type: "blob",
+          sha: entry.sha,
+        })),
+      },
+    });
+    return str(data.sha);
+  }
+
+  async createCommit(
+    token: string,
+    fullName: string,
+    commit: { message: string; tree: string; parents: string[] },
+  ): Promise<string> {
+    const data = await this.request("POST", `/repos/${fullName}/git/commits`, {
+      auth: `Bearer ${token}`,
+      body: commit,
+    });
+    return str(data.sha);
+  }
+
+  /** Moves a branch forward. Never forced: if someone else moved it first, GitHub refuses (422). */
+  async updateBranch(token: string, fullName: string, branch: string, sha: string): Promise<void> {
+    await this.request("PATCH", `/repos/${fullName}/git/refs/heads/${encodeRef(branch)}`, {
+      auth: `Bearer ${token}`,
+      body: { sha, force: false },
+    });
+  }
+
+  async createPullRequest(
+    token: string,
+    fullName: string,
+    pr: { head: string; base: string; title: string; body: string },
+  ): Promise<{ number: number; htmlUrl: string }> {
+    const data = await this.request("POST", `/repos/${fullName}/pulls`, {
+      auth: `Bearer ${token}`,
+      body: pr,
+    });
+    return { number: Number(data.number), htmlUrl: str(data.html_url) };
   }
 
   // ------------------------------------------------------------ transport

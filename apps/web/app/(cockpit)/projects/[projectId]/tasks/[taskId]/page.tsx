@@ -6,7 +6,10 @@ import { MoveTaskForm } from "@/components/projects/move-task-form";
 import { TaskFields } from "@/components/projects/task-fields";
 import { ActionForm } from "@/components/ui/action-form";
 import { Badge, Hidden, SelectField, buttonSecondary } from "@/components/ui/fields";
+import { AttachmentsPanel } from "@/components/code/attachments-panel";
 import { getTaskLinks } from "@/lib/github/repository";
+import { listTaskAttachments } from "@/lib/workspace/attachments";
+import { getWorkspaceLimits } from "@/lib/workspace/server";
 import { getMilestones, getProjectTasks, getRequirements, getTask } from "@/lib/projects/queries";
 
 export const metadata: Metadata = { title: "Task · Nexus Cloud" };
@@ -17,13 +20,16 @@ export default async function TaskPage({
   params: Promise<{ projectId: string; taskId: string }>;
 }) {
   const { projectId, taskId } = await params;
-  const [task, { tasks, edges }, requirements, milestones, links] = await Promise.all([
-    getTask(projectId, taskId),
-    getProjectTasks(projectId),
-    getRequirements(projectId),
-    getMilestones(projectId),
-    getTaskLinks(taskId),
-  ]);
+  const [task, { tasks, edges }, requirements, milestones, links, attachments, limits] =
+    await Promise.all([
+      getTask(projectId, taskId),
+      getProjectTasks(projectId),
+      getRequirements(projectId),
+      getMilestones(projectId),
+      getTaskLinks(taskId),
+      listTaskAttachments(taskId),
+      getWorkspaceLimits(projectId),
+    ]);
   const byId = new Map(tasks.map((t) => [t.id, t]));
   const dependsOn = edges
     .filter((e) => e.taskId === task.id)
@@ -141,6 +147,50 @@ export default async function TaskPage({
             </ul>
           </section>
         )}
+
+        <section aria-labelledby="attachments-heading" className="space-y-2">
+          <h2 id="attachments-heading" className="text-base font-semibold">
+            Attachments
+          </h2>
+          <AttachmentsPanel projectId={projectId} taskId={task.id} maxMb={limits.attachmentMaxMb} />
+          {attachments.length > 0 && (
+            <ul className="grid grid-cols-2 gap-2 text-xs" aria-label="Attached files">
+              {attachments.map((attachment) => (
+                <li key={attachment.id} className="space-y-1 rounded border border-nx-border p-1.5">
+                  {attachment.inline && attachment.url ? (
+                    <a href={attachment.url} target="_blank" rel="noreferrer noopener">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed storage URL */}
+                      <img
+                        src={attachment.url}
+                        alt={attachment.filename}
+                        className="h-20 w-full rounded object-cover"
+                      />
+                    </a>
+                  ) : (
+                    <p className="flex h-20 items-center justify-center rounded bg-nx-panel text-nx-muted uppercase">
+                      {attachment.contentType === "image/svg+xml" ? "svg" : attachment.kind}
+                    </p>
+                  )}
+                  {attachment.url ? (
+                    <a
+                      href={attachment.url}
+                      className="block truncate text-nx-blue underline"
+                      rel="noreferrer noopener"
+                      target={attachment.inline ? "_blank" : undefined}
+                    >
+                      {attachment.filename}
+                    </a>
+                  ) : (
+                    <span className="block truncate">{attachment.filename}</span>
+                  )}
+                  <span className="text-nx-muted">
+                    {Math.max(1, Math.round(attachment.sizeBytes / 1024))} KB
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         <section aria-labelledby="github-heading" className="space-y-2">
           <h2 id="github-heading" className="text-base font-semibold">

@@ -6,7 +6,7 @@ A personal AI-powered software engineering cloud: one dark cockpit that coordina
 
 This repository also holds **Nexus AI Hub** (formerly Zentrix AI Hub), the public product: pay-as-you-go AI video, images, coding help and study help in Naira. It lives in a separate customer zone with its own database and keys ([ADR 0015](docs/adr/0015-nexus-ai-hub-integration.md)). Both are products of Zentrix Software Solutions.
 
-**Status:** Sprint 3 (GitHub App, repository import, verified webhook inbox) complete, after Sprint 2H (Nexus AI Hub joins the platform). See the [plan](docs/plan/Nexus_Cloud_Structure_Sprint_and_Test_Plan.pdf).
+**Status:** Sprint 4 (code workspace: explorer, editor, diff, commit/PR/revert, file and folder uploads, attachments) complete. Sprint 3 added the GitHub App and webhook inbox; Sprint 2H brought in Nexus AI Hub. See the [plan](docs/plan/Nexus_Cloud_Structure_Sprint_and_Test_Plan.pdf).
 
 ## Repository layout
 
@@ -22,6 +22,7 @@ This repository also holds **Nexus AI Hub** (formerly Zentrix AI Hub), the publi
 | `packages/db`            | Database types generated from the migrations                                      |
 | `packages/config`        | Environment schema; keeps server-only variables out of the browser                |
 | `packages/integrations`  | GitHub App client, webhook verification and processing, task links                |
+| `packages/workspace`     | Path guard, upload checks, secret scan, diff, branch and commit rules, edit lock  |
 | `packages/money`         | Kobo, exchange rates, VAT and margins, shared by both products                    |
 | `packages/model-gateway` | One interface for every AI provider; one gateway per zone                         |
 | `packages/ui`            | Design tokens: dark Console theme and Ink & Cobalt Hub theme                      |
