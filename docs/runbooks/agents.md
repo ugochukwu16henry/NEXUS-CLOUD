@@ -20,6 +20,10 @@ The worker picks the recorded sandbox when the fixture flag is on. To try real c
 
 Cancel stops a run that is queued, running, or waiting. A run that hits its step limit or budget keeps what it changed so far and says which setting to raise.
 
+## Talking to the agent
+
+The Agent panel's message box works like a chat: type, or tap the **mic** and speak. Chrome, Edge and Safari transcribe in the browser for free, live. Elsewhere (Firefox, some phones) the mic records up to five minutes and the server transcribes it with Groq's Whisper (free tier; set `GROQ_API_KEY`), falling back to OpenAI. The recording goes to that provider only and is not stored; its cost is on the usage ledger and counts against the project budget and the monthly cap. **+** adds files, a folder or a .zip to the task's changes (once the task has a branch), or pictures and PDFs to the task.
+
 ## Terminal
 
 Opening the terminal asks for the authenticator. The ticket lasts 60 seconds and works once. The shell starts in a sandbox with the task's files; what you change is saved to the change set every 15 seconds and when you close it (without a branch, nothing is saved, and the shell says so). Commands are audited with secrets redacted; output is not stored. The idle timeout and the number of open terminals per project are in Project → Settings → Workspace.

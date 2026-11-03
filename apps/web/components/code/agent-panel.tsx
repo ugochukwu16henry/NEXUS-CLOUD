@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
+import { AgentComposer } from "@/components/code/agent-composer";
 import { AgentRefresh } from "@/components/code/agent-refresh";
 import { ActionForm } from "@/components/ui/action-form";
-import { TextField, buttonSecondary } from "@/components/ui/fields";
+import { buttonSecondary } from "@/components/ui/fields";
 import { newIdempotencyKey } from "@/lib/agents/idempotency";
 import { getLatestAgentRun, listAgentEvents, listPendingCommands } from "@/lib/agents/queries";
+import { getOpenChangeset, getWorkspaceLimits } from "@/lib/workspace/server";
 import {
   approvePlan,
   cancelAgent,
@@ -16,7 +18,11 @@ const WORKING = new Set(["queued", "running"]);
 
 /** Planner, coder status, command approvals and cancel. Used on the task and the code page. */
 export async function AgentPanel({ projectId, taskId }: { projectId: string; taskId: string }) {
-  const run = await getLatestAgentRun(taskId);
+  const [run, changeset, limits] = await Promise.all([
+    getLatestAgentRun(taskId),
+    getOpenChangeset(taskId),
+    getWorkspaceLimits(projectId),
+  ]);
   const [events, pending] = run
     ? await Promise.all([listAgentEvents(run.id), listPendingCommands(run.id)])
     : [[], []];
@@ -47,18 +53,19 @@ export async function AgentPanel({ projectId, taskId }: { projectId: string; tas
           ))}
         </ul>
       )}
-      <ActionForm action={planAgent} submitLabel="Plan" resetOnSuccess>
-        <input type="hidden" name="projectId" value={projectId} />
-        <input type="hidden" name="taskId" value={taskId} />
-        <input type="hidden" name="idempotencyKey" value={run ? randomUUID() : key} />
-        <TextField
-          name="purpose"
-          label="What should the agent do?"
-          defaultValue={run?.purpose ?? ""}
-          required
-          maxLength={4000}
-        />
-      </ActionForm>
+      <AgentComposer
+        action={planAgent}
+        projectId={projectId}
+        taskId={taskId}
+        idempotencyKey={run ? randomUUID() : key}
+        defaultPurpose={run?.purpose ?? ""}
+        canAddFiles={Boolean(changeset)}
+        limits={{
+          maxFileMb: limits.maxFileMb,
+          maxUploadMb: limits.maxUploadMb,
+          maxFiles: limits.maxFiles,
+        }}
+      />
       {run?.status === "waiting_approval" && run.kind === "planner" && (
         <ActionForm action={approvePlan} submitLabel="Approve plan" announceSuccess>
           <input type="hidden" name="projectId" value={projectId} />
