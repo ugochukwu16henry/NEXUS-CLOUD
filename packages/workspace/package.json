@@ -11,6 +11,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "diff": "^8.0.2"
+    "diff": "^9.0.0"
   }
 }
