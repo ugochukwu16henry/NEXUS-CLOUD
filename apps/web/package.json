@@ -34,7 +34,7 @@
     "@nexus/observability": "workspace:*",
     "@nexus/ui": "workspace:*",
     "@nexus/workspace": "workspace:*",
-    "@sentry/nextjs": "^11.9.0",
+    "@sentry/nextjs": "^11.10.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "@xterm/xterm": "^5.5.0",
