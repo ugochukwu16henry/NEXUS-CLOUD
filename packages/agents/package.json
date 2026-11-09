@@ -18,7 +18,7 @@
     "@nexus/observability": "workspace:*",
     "@nexus/workspace": "workspace:*",
     "e2b": "2.56.0",
-    "pg-boss": "^10.3.2"
+    "pg-boss": "^12.38.0"
   },
   "devDependencies": {
     "@types/node": "^26.0.0"
